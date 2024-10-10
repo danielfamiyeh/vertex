@@ -1,0 +1,37 @@
+{
+  "name": "vertex",
+  "version": "1.0.0",
+  "description": "3D game engine using 2D canvas API",
+  "main": "index.js",
+  "scripts": {
+    "test-api": "ts-mocha -p tsconfig.json test/**/*.test.ts",
+    "test": "npm run test-api",
+    "cleanup": "rm -rf .cache dist",
+    "dev": "npm run cleanup && tsc -p . && parcel src/demo.html",
+    "lint": "eslint . --ext .ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielfamiyeh/vertex.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/danielfamiyeh/vertex/issues"
+  },
+  "homepage": "https://github.com/danielfamiyeh/vertex#readme",
+  "devDependencies": {
+    "@types/expect": "^24.3.0",
+    "@types/mocha": "^9.0.0",
+    "@types/react": "^17.0.33",
+    "@types/react-dom": "^17.0.10",
+    "@typescript-eslint/eslint-plugin": "^5.2.0",
+    "@typescript-eslint/parser": "^5.2.0",
+    "eslint": "^8.1.0",
+    "parcel-bundler": "^1.12.5",
+    "typescript": "^4.4.4",
+    "mocha": "^10.7.3",
+    "ts-mocha": "^10.0.0"
+  }
+}
