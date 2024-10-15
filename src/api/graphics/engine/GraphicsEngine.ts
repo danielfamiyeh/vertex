@@ -1,7 +1,6 @@
 import { Camera } from '../camera/Camera';
 import { Matrix } from '../../math/Matrix';
 import { Vector } from '../../math/Vector';
-import { Color } from '../../graphics/color/Color';
 import { GraphicsEngineOptions } from './GraphicsEngine.types';
 import { GRAPHICS_ENGINE_OPTIONS_DEFAULTS } from './GraphicsEngine.constants';
 

@@ -117,21 +117,3 @@ export class Color {
       .join('');
   }
 }
-
-export const colorMap = {
-  black: new Color({ type: 'rgb', comps: [0, 0, 0] }),
-  white: new Color({ type: 'rgb', comps: [255, 255, 255] }),
-  red: new Color({ type: 'rgb', comps: [255, 0, 0] }),
-  green: new Color({ type: 'rgb', comps: [0, 255, 0] }),
-  blue: new Color({ type: 'rgb', comps: [0, 0, 255] }),
-  yellow: new Color({ type: 'rgb', comps: [255, 255, 0] }),
-  cyan: new Color({ type: 'rgb', comps: [0, 255, 255] }),
-  magenta: new Color({ type: 'rgb', comps: [255, 0, 255] }),
-  silver: new Color({ type: 'rgb', comps: [191, 191, 191] }),
-  grey: new Color({ type: 'rgb', comps: [128, 128, 128] }),
-  maroon: new Color({ type: 'rgb', comps: [128, 0, 0] }),
-  olive: new Color({ type: 'rgb', comps: [128, 128, 0] }),
-  darkGreen: new Color({ type: 'rgb', comps: [0, 128, 0] }),
-  purple: new Color({ type: 'rgb', comps: [128, 0, 128] }),
-  teal: new Color({ type: 'rgb', comps: [0, 128, 128] }),
-};
