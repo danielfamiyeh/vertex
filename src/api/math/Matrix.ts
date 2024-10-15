@@ -89,7 +89,6 @@ export class Matrix {
     }
     const components: number[] = [];
 
-    // Column vector
     if (this.isColumnVector) {
       this._mat.forEach((row) => components.push(row[0]));
     } else if (this.isRowVector) {
