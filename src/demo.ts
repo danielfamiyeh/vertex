@@ -8,7 +8,7 @@ const ctx = canvas.getContext('2d');
 const cube = new Cube(new Vector(0, 0, 0));
 
 const scale = 50;
-const zOffsetVector = new Vector(0, 0, 3); // Shifts mesh in front of camera
+const zOffsetVector = new Vector(0, 0, 1.5); // Shifts mesh in front of camera
 
 const { projectionMatrix, zOffset } = Matrix.getProjectionMatrix(
   canvas,

@@ -28,7 +28,7 @@ export class Matrix {
     const fy = fieldOfViewRadians;
     const fz = farPlane / (farPlane - nearPlane);
 
-    projectionMatrix._mat[0][0] = fx;
+    projectionMatrix._mat[0][0] = aspectRatio * fx;
     projectionMatrix._mat[1][1] = fy;
     projectionMatrix._mat[2][2] = fz;
 
