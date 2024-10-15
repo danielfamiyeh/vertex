@@ -1,6 +1,5 @@
-/**
- * Class representing an n-dimensional vector
- */
+import { Matrix } from '../math/Matrix';
+
 export class Vector {
   dim: number;
   comps: Array<number>;
@@ -8,6 +7,69 @@ export class Vector {
   constructor(...args: number[]) {
     this.dim = args.length;
     this.comps = args.map((num) => num);
+  }
+
+  static rotX(point: Vector, angle: number) {
+    let rad = (angle * Math.PI) / 180,
+      c = Math.cos(rad),
+      s = Math.sin(rad);
+
+    let rotXMat = new Matrix(3, 3);
+    rotXMat.mat[0][0] = 1;
+    rotXMat.mat[1][1] = c;
+    rotXMat.mat[2][2] = c;
+    rotXMat.mat[1][2] = -s;
+    rotXMat.mat[2][1] = s;
+
+    let pointAsMat = point.matrix;
+    let resultAsMat = rotXMat.mult(pointAsMat);
+    return new Vector(
+      resultAsMat.mat[0][0],
+      resultAsMat.mat[1][0],
+      resultAsMat.mat[2][0]
+    );
+  }
+
+  static rotY(point: Vector, angle: number) {
+    let rad = (angle * Math.PI) / 180,
+      c = Math.cos(rad),
+      s = Math.sin(rad);
+
+    let rotMat = new Matrix(3, 3);
+    rotMat.mat[0][0] = c;
+    rotMat.mat[1][1] = 1;
+    rotMat.mat[2][2] = c;
+    rotMat.mat[2][0] = -s;
+    rotMat.mat[0][2] = s;
+
+    let pointAsMat = point.matrix;
+    let resultAsMat = rotMat.mult(pointAsMat);
+    return new Vector(
+      resultAsMat.mat[0][0],
+      resultAsMat.mat[1][0],
+      resultAsMat.mat[2][0]
+    );
+  }
+
+  static rotZ(point: Vector, angle: number) {
+    let rad = (angle * Math.PI) / 180,
+      c = Math.cos(rad),
+      s = Math.sin(rad);
+
+    let rotMat = new Matrix(3, 3);
+    rotMat.mat[0][0] = c;
+    rotMat.mat[1][1] = c;
+    rotMat.mat[2][2] = 1;
+    rotMat.mat[1][0] = s;
+    rotMat.mat[0][1] = -s;
+
+    let pointAsMat = point.matrix;
+    let resultAsMat = rotMat.mult(pointAsMat);
+    return new Vector(
+      resultAsMat.mat[0][0],
+      resultAsMat.mat[1][0],
+      resultAsMat.mat[2][0]
+    );
   }
 
   /**
@@ -281,6 +343,15 @@ export class Vector {
    */
   set(i: number, val: number): void {
     this.comps[i] = val;
+  }
+
+  get matrix() {
+    let newMat = new Matrix(3, 1);
+    newMat.mat[0] = [this.x];
+    newMat.mat[1] = [this.y];
+    newMat.mat[2] = [this.z];
+
+    return newMat;
   }
 
   get x() {

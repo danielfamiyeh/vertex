@@ -91,6 +91,10 @@ export class Cube {
       this._triangles[0],
       this._triangles[3],
     ]);
+
+    this._triangles = this._triangles.map((t) =>
+      t.sub(new Vector(0.5, 0.5, 0.5))
+    );
   }
 
   get mesh() {
