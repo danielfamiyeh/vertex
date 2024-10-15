@@ -6,4 +6,5 @@ export const GRAPHICS_ENGINE_OPTIONS_DEFAULTS = {
   nearPlane: 0.1,
   farPlane: 1000,
   fieldOfView: 90,
+  cameraPosition: new Vector(0, 0, 0),
 };

@@ -1,5 +1,7 @@
+import { Camera } from '../camera/Camera';
 import { Matrix } from '../../math/Matrix';
 import { Vector } from '../../math/Vector';
+import { Color } from '../../graphics/color/Color';
 import { GraphicsEngineOptions } from './GraphicsEngine.types';
 import { GRAPHICS_ENGINE_OPTIONS_DEFAULTS } from './GraphicsEngine.constants';
 
@@ -7,12 +9,13 @@ let dt = 0.8;
 let angle = 0;
 
 export class GraphicsEngine {
-  private timeElapsed = 0;
   private ctx: CanvasRenderingContext2D | null;
   private projectionMatrix: Matrix;
   private zOffset: number;
   private zShift: Vector;
   private scale: number;
+  private camera: Camera;
+  private timeElapsed = 0;
 
   constructor(
     private canvas = document.getElementById('canvas') as HTMLCanvasElement,
@@ -29,6 +32,8 @@ export class GraphicsEngine {
     );
 
     this.ctx.strokeStyle = 'white';
+    this.ctx.fillStyle = 'white';
+
     this.zShift = _options.zShift;
     this.scale = _options.scale;
 
@@ -41,10 +46,13 @@ export class GraphicsEngine {
 
     this.projectionMatrix = projectionMatrix;
     this.zOffset = zOffset;
+
+    this.camera = new Camera(_options.cameraPosition);
   }
 
   render(meshes: Vector[][][]) {
-    const { ctx, canvas, projectionMatrix, zOffset, zShift, scale } = this;
+    const { ctx, camera, canvas, projectionMatrix, zOffset, zShift, scale } =
+      this;
 
     ctx?.clearRect(0, 0, canvas.width, canvas.height);
     ctx?.translate(canvas.width / 2, canvas.height / 2);
@@ -60,6 +68,18 @@ export class GraphicsEngine {
         const transformedP3 = Vector.rotX(Vector.rotZ(p3, angle), angle).add(
           zShift
         );
+
+        const { shouldCull, pNormal } = camera.shouldCull(
+          transformedP1,
+          transformedP2,
+          transformedP3
+        );
+
+        if (shouldCull) return;
+
+        const { color } = camera.illuminate(pNormal);
+
+        if (ctx) ctx.fillStyle = `#${color.toHex()}`;
 
         const projectedP1 = projectionMatrix.mult(transformedP1.matrix).vector;
         const projectedP2 = projectionMatrix.mult(transformedP2.matrix).vector;
@@ -78,6 +98,7 @@ export class GraphicsEngine {
         ctx?.lineTo(scale * x2, -scale * y2);
         ctx?.lineTo(scale * x3, -scale * y3);
         ctx?.lineTo(scale * x1, -scale * y1);
+        ctx?.fill();
         ctx?.stroke();
       });
     });
