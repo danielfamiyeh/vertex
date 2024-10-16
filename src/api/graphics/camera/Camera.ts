@@ -1,4 +1,4 @@
-import { Vector } from '../../math/Vector';
+import { Vector } from '../../math/vector/Vector';
 import { Color } from '../color/Color';
 
 export class Camera {
@@ -26,7 +26,7 @@ export class Camera {
     }).RGBToHSV();
     color.comps[2] = brightness;
 
-    return { color: color.HSVtoRGB() };
+    return { color };
   }
 
   get position() {

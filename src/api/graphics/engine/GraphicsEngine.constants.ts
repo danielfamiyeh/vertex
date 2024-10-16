@@ -1,4 +1,4 @@
-import { Vector } from '../../math/Vector';
+import { Vector } from '../../math/vector/Vector';
 
 export const GRAPHICS_ENGINE_OPTIONS_DEFAULTS = {
   scale: 750,

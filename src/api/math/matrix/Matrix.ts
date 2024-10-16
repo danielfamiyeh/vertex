@@ -1,4 +1,4 @@
-import { Vector } from './Vector';
+import { Vector } from '../vector/Vector';
 
 export class Matrix {
   _mat: number[][];
@@ -11,31 +11,6 @@ export class Matrix {
         this._mat[i][j] = 0;
       }
     }
-  }
-
-  static getProjectionMatrix(
-    canvas: HTMLCanvasElement,
-    nearPlane: number,
-    farPlane: number,
-    fieldOfViewDegrees: number
-  ) {
-    const aspectRatio = canvas.height / canvas.width;
-    const projectionMatrix = new Matrix(3, 3);
-
-    const fieldOfViewRadians =
-      1 / Math.tan(0.5 * fieldOfViewDegrees * (3.14 / 180));
-    const fx = fieldOfViewRadians;
-    const fy = fieldOfViewRadians;
-    const fz = farPlane / (farPlane - nearPlane);
-
-    projectionMatrix._mat[0][0] = aspectRatio * fx;
-    projectionMatrix._mat[1][1] = fy;
-    projectionMatrix._mat[2][2] = fz;
-
-    return {
-      projectionMatrix,
-      zOffset: (farPlane * nearPlane) / (farPlane - nearPlane),
-    };
   }
 
   mult(matrix: Matrix) {

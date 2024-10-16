@@ -1,4 +1,4 @@
-import { Vector } from '../../math/Vector';
+import { Vector } from '../../math/vector/Vector';
 
 export type GraphicsEngineOptions = {
   scale?: number;
@@ -7,3 +7,10 @@ export type GraphicsEngineOptions = {
   farPlane?: number;
   fieldOfView?: number;
 };
+
+export type Raster = {
+  face: Vector[];
+  zMidpoint: number;
+  pNormal: Vector;
+  color: string;
+}[];
