@@ -1,8 +1,6 @@
-import { Vector } from './api/math/Vector';
-import { Cube } from './api/util/cube/Cube';
 import { GraphicsEngine } from './api/graphics/engine/GraphicsEngine';
 
-const cube = new Cube(new Vector(0, 0, 0));
 const graphicsEngine = new GraphicsEngine();
+const meshes = ['http://127.0.0.1:8080/monkey.obj'];
 
-graphicsEngine.render([cube.mesh]);
+graphicsEngine.loadMeshes(...meshes).then(graphicsEngine.render);
