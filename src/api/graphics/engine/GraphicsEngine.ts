@@ -16,7 +16,6 @@ export class GraphicsEngine {
   private zShift: Vector;
   private scale: number;
   private camera: Camera;
-  private timeElapsed = 0;
   private _meshes: Mesh[];
 
   constructor(
@@ -122,6 +121,8 @@ export class GraphicsEngine {
     ctx?.clearRect(0, 0, canvas.width, canvas.height);
     ctx?.translate(canvas.width / 2, canvas.height / 2);
 
+    const raster: { face: Vector[]; zMidpoint: number; pNormal: Vector }[] = [];
+
     _meshes.forEach((mesh) => {
       mesh.triangles.forEach(([p1, p2, p3]) => {
         const transformedP1 = Vector.rotX(Vector.rotZ(p1, angle), angle).add(
@@ -154,23 +155,36 @@ export class GraphicsEngine {
         projectedP2.comps[2] -= zOffset;
         projectedP3.comps[2] -= zOffset;
 
-        const { x: x1, y: y1 } = Vector.div(projectedP1, projectedP1.z);
-        const { x: x2, y: y2 } = Vector.div(projectedP2, projectedP2.z);
-        const { x: x3, y: y3 } = Vector.div(projectedP3, projectedP3.z);
-
-        ctx?.beginPath();
-        ctx?.moveTo(scale * x1, -scale * y1);
-        ctx?.lineTo(scale * x2, -scale * y2);
-        ctx?.lineTo(scale * x3, -scale * y3);
-        ctx?.lineTo(scale * x1, -scale * y1);
-        ctx?.fill();
+        raster.push({
+          face: [projectedP1, projectedP2, projectedP3],
+          zMidpoint: (projectedP1.z + projectedP2.z + projectedP3.z) / 3,
+          pNormal,
+        });
       });
+    });
+
+    raster.sort((a, b) => b.zMidpoint - a.zMidpoint);
+
+    raster.forEach(({ face: [p1, p2, p3], pNormal }) => {
+      const { color } = camera.illuminate(pNormal);
+
+      if (ctx) ctx.fillStyle = `#${color.toHex()}`;
+
+      const { x: x1, y: y1 } = Vector.div(p1, p1.z);
+      const { x: x2, y: y2 } = Vector.div(p2, p2.z);
+      const { x: x3, y: y3 } = Vector.div(p3, p3.z);
+
+      ctx?.beginPath();
+      ctx?.moveTo(scale * x1, -scale * y1);
+      ctx?.lineTo(scale * x2, -scale * y2);
+      ctx?.lineTo(scale * x3, -scale * y3);
+      ctx?.lineTo(scale * x1, -scale * y1);
+      ctx?.fill();
     });
 
     ctx?.translate(-canvas.width / 2, -canvas.height / 2);
 
     angle += dt;
-    this.timeElapsed++;
     window.requestAnimationFrame(this.render.bind(this));
   }
 }
