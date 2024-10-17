@@ -1,4 +1,7 @@
+import { Matrix } from '../../math/matrix/Matrix';
 import { Vector } from '../../math/vector/Vector';
+import { Camera } from '../camera/Camera';
+import { Mesh } from '../mesh/Mesh';
 
 export type GraphicsEngineOptions = {
   scale?: number;
@@ -6,6 +9,7 @@ export type GraphicsEngineOptions = {
   nearPlane?: number;
   farPlane?: number;
   fieldOfView?: number;
+  useWorker?: boolean;
 };
 
 export type Raster = {
@@ -14,3 +18,11 @@ export type Raster = {
   pNormal: Vector;
   color: string;
 }[];
+
+export type GeometryPipelineArgs = {
+  meshes: Mesh[];
+  zShift: Vector;
+  camera: Camera;
+  projectionMatrix: Matrix;
+  zOffset: number;
+};
