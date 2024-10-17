@@ -126,7 +126,7 @@ export class GraphicsEngine {
     ctx?.clearRect(0, 0, canvas.width, canvas.height);
     ctx?.translate(canvas.width / 2, canvas.height / 2);
 
-    window.vertexGraphicsEngine.graphics?.queue.push(event.data);
+    window.vertexGameEngine.graphics?.queue.push(event.data);
 
     ctx?.translate(-canvas.width / 2, -canvas.height / 2);
   }
