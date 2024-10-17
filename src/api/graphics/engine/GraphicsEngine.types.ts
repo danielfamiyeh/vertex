@@ -10,6 +10,7 @@ export type GraphicsEngineOptions = {
   farPlane?: number;
   fieldOfView?: number;
   useWorker?: boolean;
+  fps?: number;
 };
 
 export type Raster = {

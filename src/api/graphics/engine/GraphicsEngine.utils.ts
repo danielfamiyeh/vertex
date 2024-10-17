@@ -1,6 +1,4 @@
-import { GeometryPipelineArgs, Raster } from './GraphicsEngine.types';
 import { Vector } from '../../math/vector/Vector';
-import { Camera } from '../camera/Camera';
 
 export const GRAPHICS_ENGINE_OPTIONS_DEFAULTS = {
   scale: 750,
@@ -10,4 +8,5 @@ export const GRAPHICS_ENGINE_OPTIONS_DEFAULTS = {
   fieldOfView: 90,
   cameraPosition: new Vector(0, 0, 0),
   useWorker: true,
+  fps: 30,
 };

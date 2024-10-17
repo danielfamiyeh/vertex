@@ -22,6 +22,8 @@ export class GraphicsEngine {
   private camera: Camera;
   private meshes: Mesh[];
   public queue: Raster[];
+  private lastFrame = Date.now();
+  private fps: number;
 
   static angle = 0;
   static dt = 4;
@@ -43,6 +45,7 @@ export class GraphicsEngine {
     this.ctx.strokeStyle = 'white';
     this.ctx.fillStyle = 'white';
 
+    this.fps = _options.fps;
     this.zShift = _options.zShift;
     this.scale = _options.scale;
 
@@ -236,23 +239,33 @@ export class GraphicsEngine {
         camera: this.camera,
         scale: this.scale,
       });
-
-      const raster = this.queue.shift();
-      if (raster) this.screen(raster);
-    } else {
-      this.screen(
-        GraphicsEngine.rasterize(
-          GraphicsEngine.geometry({
-            projectionMatrix: this.projectionMatrix,
-            zOffset: this.zOffset,
-            meshes: this.meshes,
-            zShift: this.zShift,
-            camera: this.camera,
-          }),
-          this.camera
-        )
-      );
     }
+
+    const interval = 1000 / this.fps;
+    const now = Date.now();
+    const delta = now - this.lastFrame;
+
+    if (delta > interval) {
+      if (this.worker) {
+        const raster = this.queue.shift();
+        if (raster) this.screen(raster);
+      } else {
+        this.screen(
+          GraphicsEngine.rasterize(
+            GraphicsEngine.geometry({
+              projectionMatrix: this.projectionMatrix,
+              zOffset: this.zOffset,
+              meshes: this.meshes,
+              zShift: this.zShift,
+              camera: this.camera,
+            }),
+            this.camera
+          )
+        );
+      }
+      this.lastFrame = now - (delta % interval);
+    }
+
     window.requestAnimationFrame(this.render.bind(this));
   }
 }
