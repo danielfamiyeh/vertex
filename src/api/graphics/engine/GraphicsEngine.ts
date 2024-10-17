@@ -2,16 +2,14 @@ import { Mesh } from '../mesh/Mesh';
 import { Camera } from '../camera/Camera';
 import { Matrix } from '../../math/matrix/Matrix';
 import { Vector } from '../../math/vector/Vector';
-import { GraphicsEngineOptions, Raster } from './GraphicsEngine.types';
 import {
-  GRAPHICS_ENGINE_OPTIONS_DEFAULTS,
-  pipeline,
-} from './GraphicsEngine.utils';
+  GeometryPipelineArgs,
+  GraphicsEngineOptions,
+  Raster,
+} from './GraphicsEngine.types';
+import { GRAPHICS_ENGINE_OPTIONS_DEFAULTS } from './GraphicsEngine.utils';
 
 import { getProjectionMatrix } from '../../math/matrix/Matrix.utils';
-
-let dt = 0.8;
-let angle = 0;
 
 export class GraphicsEngine {
   // TODO: Underscore all private class members
@@ -24,6 +22,9 @@ export class GraphicsEngine {
   private camera: Camera;
   private meshes: Mesh[];
   public queue: Raster[];
+
+  static angle = 0;
+  static dt = 4;
 
   constructor(
     private canvas = document.getElementById('canvas') as HTMLCanvasElement,
@@ -66,6 +67,105 @@ export class GraphicsEngine {
 
     this.queue = [];
     window.vertexGameEngine.graphics = this;
+  }
+
+  static geometry(args: GeometryPipelineArgs) {
+    const { meshes, zShift, camera, projectionMatrix, zOffset } = args;
+
+    const raster: Raster = [];
+    GraphicsEngine.angle += GraphicsEngine.dt;
+
+    meshes.forEach((mesh) => {
+      mesh.triangles.forEach(([p1, p2, p3]) => {
+        // const transformedP1 = Vector.add(p1, zShift);
+        // const transformedP2 = Vector.add(p2, zShift);
+        // const transformedP3 = Vector.add(p3, zShift);
+
+        p1.__proto__ = Vector.prototype;
+        p2.__proto__ = Vector.prototype;
+        p3.__proto__ = Vector.prototype;
+
+        const transformedP1 = Vector.rotX(
+          Vector.rotZ(p1, GraphicsEngine.angle),
+          GraphicsEngine.angle
+        ).add(zShift);
+        const transformedP2 = Vector.rotX(
+          Vector.rotZ(p2, GraphicsEngine.angle),
+          GraphicsEngine.angle
+        ).add(zShift);
+        const transformedP3 = Vector.rotX(
+          Vector.rotZ(p3, GraphicsEngine.angle),
+          GraphicsEngine.angle
+        ).add(zShift);
+
+        const pNormal = Vector.sub(transformedP2, transformedP1)
+          .cross(Vector.sub(transformedP3, transformedP1))
+          .normalize();
+        const raySimilarity = Vector.sub(camera.position, transformedP1)
+          .normalize()
+          .dot(pNormal);
+
+        // TODO: NO MAGIC NUMBERS
+        if (raySimilarity < 0.05) return;
+
+        const projectedP1 = projectionMatrix.mult(transformedP1.matrix).vector;
+        const projectedP2 = projectionMatrix.mult(transformedP2.matrix).vector;
+        const projectedP3 = projectionMatrix.mult(transformedP3.matrix).vector;
+
+        projectedP1.comps[2] -= zOffset;
+        projectedP2.comps[2] -= zOffset;
+        projectedP3.comps[2] -= zOffset;
+
+        const finalP1 = Vector.div(projectedP1, projectedP1.z);
+        const finalP2 = Vector.div(projectedP2, projectedP2.z);
+        const finalP3 = Vector.div(projectedP3, projectedP3.z);
+
+        raster.push({
+          face: [finalP1, finalP2, finalP3],
+          zMidpoint: (projectedP1.z + projectedP2.z + projectedP3.z) / 3,
+          pNormal,
+          color: '',
+        });
+      });
+    });
+
+    return raster;
+  }
+
+  static rasterize(raster: Raster, camera: Camera) {
+    raster.sort((a, b) => b.zMidpoint - a.zMidpoint);
+
+    raster.forEach((rasterObj) => {
+      const { color } = camera.illuminate(rasterObj.pNormal);
+      rasterObj.color = `#${color.toHex()}`;
+    });
+
+    return raster;
+  }
+
+  screen(raster: Raster) {
+    const { ctx, canvas, scale } = this;
+    ctx?.clearRect(0, 0, canvas.width, canvas.height);
+    ctx?.translate(canvas.width / 2, canvas.height / 2);
+    raster.forEach((raster) => {
+      if (!ctx) return;
+      raster.face.forEach((v) => (v.__proto__ = Vector.prototype));
+
+      const {
+        face: [p1, p2, p3],
+        color,
+      } = raster;
+      ctx.fillStyle = color;
+
+      ctx?.beginPath();
+      ctx?.moveTo(scale * p1.x, -scale * p1.y);
+      ctx?.lineTo(scale * p2.x, -scale * p2.y);
+      ctx?.lineTo(scale * p3.x, -scale * p3.y);
+      ctx?.lineTo(scale * p1.x, -scale * p1.y);
+      ctx?.fill();
+    });
+
+    ctx?.translate(-canvas.width / 2, -canvas.height / 2);
   }
 
   static async loadMesh(url: string) {
@@ -116,64 +216,42 @@ export class GraphicsEngine {
 
   async loadMeshes(...urls: string[]) {
     const meshes = urls.map((url) => GraphicsEngine.loadMesh(url));
-    await Promise.all(meshes).then((meshes) => {
+
+    return await Promise.all(meshes).then((meshes) => {
       this.meshes.push(...meshes);
     });
   }
 
   private handleWorkerRender(event: MessageEvent) {
-    const { ctx, canvas } = this;
-    ctx?.clearRect(0, 0, canvas.width, canvas.height);
-    ctx?.translate(canvas.width / 2, canvas.height / 2);
-
     window.vertexGameEngine.graphics?.queue.push(event.data);
-
-    ctx?.translate(-canvas.width / 2, -canvas.height / 2);
   }
 
   render() {
-    const { ctx, canvas, camera, scale, queue } = this;
-
     if (this.worker) {
       this.worker?.postMessage({
         projectionMatrix: this.projectionMatrix,
         zOffset: this.zOffset,
         meshes: this.meshes,
         zShift: this.zShift,
-        camera,
-        scale,
+        camera: this.camera,
+        scale: this.scale,
       });
 
-      const raster = queue.shift();
-
-      if (raster) {
-        ctx?.clearRect(0, 0, canvas.width, canvas.height);
-        ctx?.translate(canvas.width / 2, canvas.height / 2);
-        pipeline.screen(raster, ctx, scale);
-
-        ctx?.translate(-canvas.width / 2, -canvas.height / 2);
-      }
+      const raster = this.queue.shift();
+      if (raster) this.screen(raster);
     } else {
-      ctx?.clearRect(0, 0, canvas.width, canvas.height);
-      ctx?.translate(canvas.width / 2, canvas.height / 2);
-
-      pipeline.screen(
-        pipeline.rasterize(
-          pipeline.geometry({
+      this.screen(
+        GraphicsEngine.rasterize(
+          GraphicsEngine.geometry({
             projectionMatrix: this.projectionMatrix,
             zOffset: this.zOffset,
             meshes: this.meshes,
             zShift: this.zShift,
-            camera,
+            camera: this.camera,
           }),
-          camera
-        ),
-        ctx,
-        scale
+          this.camera
+        )
       );
-
-      ctx?.translate(-canvas.width / 2, -canvas.height / 2);
-      angle += dt;
     }
     window.requestAnimationFrame(this.render.bind(this));
   }
