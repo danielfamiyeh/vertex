@@ -13,6 +13,77 @@ export class Matrix {
     }
   }
 
+  static identity(size: number) {
+    const matrix = new Matrix(size, size);
+    for (let i = 0; i < size; i++) {
+      for (let j = 0; j < size; j++) {
+        if (i !== j) continue;
+        matrix._mat[i][j] = 1;
+      }
+    }
+
+    return matrix;
+  }
+
+  static xRotation(angle: number) {
+    const rad = (angle * Math.PI) / 180,
+      c = Math.cos(rad),
+      s = Math.sin(rad);
+
+    const matrix = Matrix.identity(3);
+    matrix.mat[0][0] = 1;
+    matrix.mat[1][1] = c;
+    matrix.mat[2][2] = c;
+    matrix.mat[1][2] = -s;
+    matrix.mat[2][1] = s;
+
+    return matrix;
+  }
+
+  static yRotation(angle: number) {
+    const rad = (angle * Math.PI) / 180,
+      c = Math.cos(rad),
+      s = Math.sin(rad);
+
+    const matrix = Matrix.identity(3);
+    matrix.mat[0][0] = c;
+    matrix.mat[1][1] = 1;
+    matrix.mat[2][2] = c;
+    matrix.mat[2][0] = -s;
+    matrix.mat[0][2] = s;
+
+    return matrix;
+  }
+
+  static zRotation(angle: number) {
+    const rad = (angle * Math.PI) / 180,
+      c = Math.cos(rad),
+      s = Math.sin(rad);
+
+    const matrix = Matrix.identity(3);
+    matrix.mat[0][0] = c;
+    matrix.mat[1][1] = c;
+    matrix.mat[2][2] = 1;
+    matrix.mat[1][0] = s;
+    matrix.mat[0][1] = -s;
+
+    return matrix;
+  }
+
+  static translation(distance: Vector) {
+    const matrix = new Matrix(3, 4);
+
+    matrix._mat[0][0] = 1;
+    matrix._mat[1][1] = 1;
+    matrix._mat[2][2] = 1;
+
+    matrix._mat[0][3] = distance.x;
+    matrix._mat[1][3] = distance.y;
+    matrix._mat[2][3] = distance.z;
+
+    return matrix;
+  }
+
   mult(matrix: Matrix) {
     if (this.cols !== matrix.rows)
       throw new Error(

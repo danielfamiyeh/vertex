@@ -80,26 +80,17 @@ export class GraphicsEngine {
 
     meshes.forEach((mesh) => {
       mesh.triangles.forEach(([p1, p2, p3]) => {
-        // const transformedP1 = Vector.add(p1, zShift);
-        // const transformedP2 = Vector.add(p2, zShift);
-        // const transformedP3 = Vector.add(p3, zShift);
-
         p1.__proto__ = Vector.prototype;
         p2.__proto__ = Vector.prototype;
         p3.__proto__ = Vector.prototype;
 
-        const transformedP1 = Vector.rotX(
-          Vector.rotZ(p1, GraphicsEngine.angle),
-          GraphicsEngine.angle
-        ).add(zShift);
-        const transformedP2 = Vector.rotX(
-          Vector.rotZ(p2, GraphicsEngine.angle),
-          GraphicsEngine.angle
-        ).add(zShift);
-        const transformedP3 = Vector.rotX(
-          Vector.rotZ(p3, GraphicsEngine.angle),
-          GraphicsEngine.angle
-        ).add(zShift);
+        const worldMatrix = Matrix.xRotation(GraphicsEngine.angle).mult(
+          Matrix.zRotation(GraphicsEngine.angle)
+        );
+
+        const transformedP1 = worldMatrix.mult(p1.matrix).vector.add(zShift);
+        const transformedP2 = worldMatrix.mult(p2.matrix).vector.add(zShift);
+        const transformedP3 = worldMatrix.mult(p3.matrix).vector.add(zShift);
 
         const pNormal = Vector.sub(transformedP2, transformedP1)
           .cross(Vector.sub(transformedP3, transformedP1))
@@ -190,7 +181,8 @@ export class GraphicsEngine {
             ...line
               .slice(2)
               .split(' ')
-              .map((v) => parseFloat(v))
+              .map((v) => parseFloat(v)),
+            1
           )
         );
       } else if (line.startsWith('f')) {
