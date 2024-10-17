@@ -9,10 +9,6 @@ import {
 } from './GraphicsEngine.types';
 import { GRAPHICS_ENGINE_OPTIONS_DEFAULTS } from './GraphicsEngine.utils';
 
-import { getProjectionMatrix } from '../../math/matrix/Matrix.utils';
-
-let printed = false;
-
 export class GraphicsEngine {
   // TODO: Underscore all private class members
   private ctx: CanvasRenderingContext2D | null;
@@ -51,7 +47,7 @@ export class GraphicsEngine {
     this.zShift = _options.zShift;
     this.scale = _options.scale;
 
-    const { projectionMatrix, zOffset } = getProjectionMatrix(
+    const { projectionMatrix, zOffset } = Matrix.projectionMatrix(
       canvas,
       _options.nearPlane,
       _options.farPlane,
@@ -80,7 +76,11 @@ export class GraphicsEngine {
     const raster: Raster = [];
 
     camera.position.__proto__ = Vector.prototype;
-    GraphicsEngine.angle += GraphicsEngine.dt;
+    camera.direction.__proto__ = Vector.prototype;
+
+    const { viewMatrix, cameraMatrix } = Matrix.viewMatrix(camera);
+
+    // GraphicsEngine.angle += GraphicsEngine.dt;
 
     meshes.forEach((mesh) => {
       mesh.triangles.forEach(([p1, p2, p3]) => {
@@ -97,17 +97,28 @@ export class GraphicsEngine {
         const transformedP2 = worldMatrix.mult(p2.matrix).vector;
         const transformedP3 = worldMatrix.mult(p3.matrix).vector;
 
-        const { shouldCull, pNormal } = camera.shouldCull(
+        const pNormal = Vector.sub(transformedP2, transformedP1)
+          .cross(Vector.sub(transformedP3, transformedP1))
+          .normalize()
+          .extend(0);
+
+        const raySimilarity = Vector.sub(
           transformedP1,
-          transformedP2,
-          transformedP3
-        );
+          Vector.extended(camera.position, 1)
+        )
+          .normalize()
+          .dot(pNormal);
 
-        if (shouldCull) return;
+        // TODO: Use Camera.shouldCull
+        if (raySimilarity > 0.05) return;
 
-        const projectedP1 = projectionMatrix.mult(transformedP1.matrix).vector;
-        const projectedP2 = projectionMatrix.mult(transformedP2.matrix).vector;
-        const projectedP3 = projectionMatrix.mult(transformedP3.matrix).vector;
+        const viewP1 = viewMatrix.mult(transformedP1.matrix).vector;
+        const viewP2 = viewMatrix.mult(transformedP2.matrix).vector;
+        const viewP3 = viewMatrix.mult(transformedP3.matrix).vector;
+
+        const projectedP1 = projectionMatrix.mult(viewP1.matrix).vector;
+        const projectedP2 = projectionMatrix.mult(viewP2.matrix).vector;
+        const projectedP3 = projectionMatrix.mult(viewP3.matrix).vector;
 
         projectedP1.comps[2] -= zOffset;
         projectedP2.comps[2] -= zOffset;

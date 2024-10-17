@@ -1,3 +1,4 @@
+import { Camera } from '../../graphics/camera/Camera';
 import { Vector } from '../vector/Vector';
 
 export class Matrix {
@@ -13,6 +14,74 @@ export class Matrix {
     }
   }
 
+  static viewMatrix(camera: Camera) {
+    const { position, direction } = camera;
+    const target = Vector.add(position, direction);
+    const tempYAxis = new Vector(0, 1, 0);
+
+    const newZAxis = Vector.sub(target, position).normalize();
+    const newXAxis = tempYAxis.cross(newZAxis).normalize();
+    const newYAxis = newZAxis.cross(newXAxis).normalize();
+
+    const translation = new Vector(
+      position.dot(newXAxis),
+      position.dot(newYAxis),
+      position.dot(newZAxis)
+    );
+
+    const cameraMatrix = Matrix.identity(4);
+    const viewMatrix = Matrix.identity(4);
+
+    cameraMatrix._mat = [
+      [...newXAxis.comps, translation.x],
+      [...newYAxis.comps, translation.z],
+      [...newZAxis.comps, translation.y],
+      [0, 0, 0, 1],
+    ];
+
+    viewMatrix._mat = [
+      [newXAxis.x, newYAxis.x, newZAxis.x, 0],
+      [newXAxis.y, newYAxis.y, newZAxis.y, 0],
+      [newXAxis.z, newYAxis.z, newZAxis.z, 0],
+      [...Vector.scale(translation, 1).comps, 1],
+    ];
+
+    return { cameraMatrix, viewMatrix };
+  }
+
+  static quickInverse(m: Matrix) {
+    const matrix = Matrix.identity(4);
+    matrix._mat[0][0] = m._mat[0][0];
+    matrix._mat[0][1] = m._mat[1][0];
+    matrix._mat[0][2] = m._mat[2][0];
+    matrix._mat[0][3] = 0;
+    matrix._mat[1][0] = m._mat[0][1];
+    matrix._mat[1][1] = m._mat[1][1];
+    matrix._mat[1][2] = m._mat[2][1];
+    matrix._mat[1][3] = 0;
+    matrix._mat[2][0] = m._mat[0][2];
+    matrix._mat[2][1] = m._mat[1][2];
+    matrix._mat[2][2] = m._mat[2][2];
+    matrix._mat[2][3] = 0;
+    matrix._mat[3][0] = -(
+      m._mat[3][0] * matrix._mat[0][0] +
+      m._mat[3][1] * matrix._mat[1][0] +
+      m._mat[3][2] * matrix._mat[2][0]
+    );
+    matrix._mat[3][1] = -(
+      m._mat[3][0] * matrix._mat[0][1] +
+      m._mat[3][1] * matrix._mat[1][1] +
+      m._mat[3][2] * matrix._mat[2][1]
+    );
+    matrix._mat[3][2] = -(
+      m._mat[3][0] * matrix._mat[0][2] +
+      m._mat[3][1] * matrix._mat[1][2] +
+      m._mat[3][2] * matrix._mat[2][2]
+    );
+    matrix._mat[3][3] = 1;
+    return matrix;
+  }
+
   static worldMatrix(rotation: Vector, translation: Vector) {
     const xRotation = Matrix.xRotation(rotation.x);
     // TODO: Quaternions?
@@ -21,6 +90,31 @@ export class Matrix {
     const _translation = Matrix.translation(translation);
 
     return _translation.mult(xRotation.mult(zRotation));
+  }
+
+  static projectionMatrix(
+    canvas: HTMLCanvasElement,
+    nearPlane: number,
+    farPlane: number,
+    fieldOfViewDegrees: number
+  ) {
+    const aspectRatio = canvas.height / canvas.width;
+    const projectionMatrix = Matrix.identity(4);
+
+    const fieldOfViewRadians =
+      1 / Math.tan(0.5 * fieldOfViewDegrees * (3.14 / 180));
+    const fx = fieldOfViewRadians;
+    const fy = fieldOfViewRadians;
+    const fz = farPlane / (farPlane - nearPlane);
+
+    projectionMatrix._mat[0][0] = aspectRatio * fx;
+    projectionMatrix._mat[1][1] = fy;
+    projectionMatrix._mat[2][2] = fz;
+
+    return {
+      projectionMatrix,
+      zOffset: (farPlane * nearPlane) / (farPlane - nearPlane),
+    };
   }
 
   static identity(size: number) {

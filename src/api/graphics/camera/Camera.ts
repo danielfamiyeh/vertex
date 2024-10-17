@@ -2,17 +2,39 @@ import { Vector } from '../../math/vector/Vector';
 import { Color } from '../color/Color';
 
 export class Camera {
-  constructor(private _position: Vector) {
-    this._position.extend(1);
+  constructor(
+    private _position: Vector,
+    private _direction = new Vector(0, 0, 1)
+  ) {
+    addEventListener('keydown', (event) => {
+      console.log(event.key);
+      if (event.key.toLowerCase() === 'w') {
+        this._position.y += 5;
+      }
+
+      if (event.key.toLowerCase() === 's') {
+        this._position.y -= 5;
+      }
+
+      if (event.key.toLowerCase() === 'a') {
+        this._position.x -= 5;
+      }
+
+      if (event.key.toLowerCase() === 'd') {
+        this._position.x += 5;
+      }
+    });
   }
 
   shouldCull(p1: Vector, p2: Vector, p3: Vector, epsilon = 0.05) {
-    const pNormal = Vector.sub(p2, p1).cross(Vector.sub(p3, p1)).normalize();
+    const pNormal = Vector.sub(p2, p1)
+      .cross(Vector.sub(p3, p1))
+      .normalize()
+      .extend(0);
 
-    const raySimilarity = Vector.sub(this._position, p1)
+    const raySimilarity = Vector.sub(p1, this.position)
       .normalize()
       .dot(pNormal);
-
     return { pNormal, raySimilarity, shouldCull: raySimilarity < epsilon };
   }
 
@@ -20,7 +42,7 @@ export class Camera {
     const light = new Vector(0, 0, -1).normalize();
 
     const raySimilarity = light.dot(normal);
-    const brightness = Math.max(0.1, raySimilarity);
+    const brightness = raySimilarity;
 
     let color = new Color({
       type: 'rgb',
@@ -33,5 +55,9 @@ export class Camera {
 
   get position() {
     return this._position;
+  }
+
+  get direction() {
+    return this._direction;
   }
 }

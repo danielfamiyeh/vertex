@@ -143,7 +143,7 @@ export class Vector {
    * @returns {Vector} Scaled vector
    */
   static scale(v: Vector, lambda: number): Vector {
-    return new Vector(...v.comps.map((comp) => comp * lambda));
+    return new Vector(...v.comps.map((comp) => (!comp ? comp : comp * lambda)));
   }
 
   /**
@@ -210,7 +210,7 @@ export class Vector {
     const j = a[0] * b[2] - a[2] * b[0];
     const k = a[0] * b[1] - a[1] * b[0];
 
-    return new Vector(i, -j, k);
+    return new Vector(i, j === 0 ? j : -j, k);
   }
 
   /**
@@ -286,7 +286,9 @@ export class Vector {
    * @returns {Vector} Scaled vector
    */
   scale(lambda: number): Vector {
-    return new Vector(...this.comps.map((comp) => comp * lambda));
+    return new Vector(
+      ...this.comps.map((comp) => (!comp ? comp : comp * lambda))
+    );
   }
 
   /**
