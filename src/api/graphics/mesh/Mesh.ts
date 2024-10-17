@@ -1,4 +1,4 @@
-import { Vector } from '../../math/Vector';
+import { Vector } from '../../math/vector/Vector';
 
 export class Mesh {
   constructor(

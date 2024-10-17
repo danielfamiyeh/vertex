@@ -1,4 +1,4 @@
-import { Matrix } from '../math/Matrix';
+import { Matrix } from '../matrix/Matrix';
 
 export class Vector {
   dim: number;
