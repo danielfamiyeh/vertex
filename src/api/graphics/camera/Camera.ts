@@ -2,7 +2,9 @@ import { Vector } from '../../math/vector/Vector';
 import { Color } from '../color/Color';
 
 export class Camera {
-  constructor(private _position: Vector) {}
+  constructor(private _position: Vector) {
+    this._position.extend(1);
+  }
 
   shouldCull(p1: Vector, p2: Vector, p3: Vector, epsilon = 0.05) {
     const pNormal = Vector.sub(p2, p1).cross(Vector.sub(p3, p1)).normalize();

@@ -7,7 +7,7 @@ export function getProjectionMatrix(
   fieldOfViewDegrees: number
 ) {
   const aspectRatio = canvas.height / canvas.width;
-  const projectionMatrix = new Matrix(3, 3);
+  const projectionMatrix = Matrix.identity(4);
 
   const fieldOfViewRadians =
     1 / Math.tan(0.5 * fieldOfViewDegrees * (3.14 / 180));

@@ -274,7 +274,7 @@ export class Vector {
    */
   normalize(): Vector {
     const mag = this.mag;
-    this.comps = this.comps.map((comp) => comp / mag);
+    this.comps = this.comps.map((comp) => comp / (mag || 1));
 
     return this;
   }
@@ -346,10 +346,10 @@ export class Vector {
   }
 
   get matrix() {
-    let newMat = new Matrix(3, 1);
-    newMat.mat[0] = [this.x];
-    newMat.mat[1] = [this.y];
-    newMat.mat[2] = [this.z];
+    let newMat = new Matrix(this.dim, 1);
+    for (let i = 0; i < this.dim; i++) {
+      newMat.mat[i] = [this.comps[i]];
+    }
 
     return newMat;
   }

@@ -13,6 +13,16 @@ export class Matrix {
     }
   }
 
+  static worldMatrix(rotation: Vector, translation: Vector) {
+    const xRotation = Matrix.xRotation(rotation.x);
+    // TODO: Quaternions?
+    const yRotation = Matrix.yRotation(rotation.y);
+    const zRotation = Matrix.zRotation(rotation.z);
+    const _translation = Matrix.translation(translation);
+
+    return _translation.mult(xRotation.mult(zRotation));
+  }
+
   static identity(size: number) {
     const matrix = new Matrix(size, size);
     for (let i = 0; i < size; i++) {
@@ -30,7 +40,7 @@ export class Matrix {
       c = Math.cos(rad),
       s = Math.sin(rad);
 
-    const matrix = Matrix.identity(3);
+    const matrix = Matrix.identity(4);
     matrix.mat[0][0] = 1;
     matrix.mat[1][1] = c;
     matrix.mat[2][2] = c;
@@ -45,7 +55,7 @@ export class Matrix {
       c = Math.cos(rad),
       s = Math.sin(rad);
 
-    const matrix = Matrix.identity(3);
+    const matrix = Matrix.identity(4);
     matrix.mat[0][0] = c;
     matrix.mat[1][1] = 1;
     matrix.mat[2][2] = c;
@@ -60,7 +70,7 @@ export class Matrix {
       c = Math.cos(rad),
       s = Math.sin(rad);
 
-    const matrix = Matrix.identity(3);
+    const matrix = Matrix.identity(4);
     matrix.mat[0][0] = c;
     matrix.mat[1][1] = c;
     matrix.mat[2][2] = 1;
@@ -71,11 +81,7 @@ export class Matrix {
   }
 
   static translation(distance: Vector) {
-    const matrix = new Matrix(3, 4);
-
-    matrix._mat[0][0] = 1;
-    matrix._mat[1][1] = 1;
-    matrix._mat[2][2] = 1;
+    const matrix = Matrix.identity(4);
 
     matrix._mat[0][3] = distance.x;
     matrix._mat[1][3] = distance.y;

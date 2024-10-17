@@ -11,6 +11,8 @@ import { GRAPHICS_ENGINE_OPTIONS_DEFAULTS } from './GraphicsEngine.utils';
 
 import { getProjectionMatrix } from '../../math/matrix/Matrix.utils';
 
+let printed = false;
+
 export class GraphicsEngine {
   // TODO: Underscore all private class members
   private ctx: CanvasRenderingContext2D | null;
@@ -76,6 +78,8 @@ export class GraphicsEngine {
     const { meshes, zShift, camera, projectionMatrix, zOffset } = args;
 
     const raster: Raster = [];
+
+    camera.position.__proto__ = Vector.prototype;
     GraphicsEngine.angle += GraphicsEngine.dt;
 
     meshes.forEach((mesh) => {
@@ -84,23 +88,22 @@ export class GraphicsEngine {
         p2.__proto__ = Vector.prototype;
         p3.__proto__ = Vector.prototype;
 
-        const worldMatrix = Matrix.xRotation(GraphicsEngine.angle).mult(
-          Matrix.zRotation(GraphicsEngine.angle)
+        const worldMatrix = Matrix.worldMatrix(
+          new Vector(GraphicsEngine.angle, 0, GraphicsEngine.angle),
+          zShift
         );
 
-        const transformedP1 = worldMatrix.mult(p1.matrix).vector.add(zShift);
-        const transformedP2 = worldMatrix.mult(p2.matrix).vector.add(zShift);
-        const transformedP3 = worldMatrix.mult(p3.matrix).vector.add(zShift);
+        const transformedP1 = worldMatrix.mult(p1.matrix).vector;
+        const transformedP2 = worldMatrix.mult(p2.matrix).vector;
+        const transformedP3 = worldMatrix.mult(p3.matrix).vector;
 
-        const pNormal = Vector.sub(transformedP2, transformedP1)
-          .cross(Vector.sub(transformedP3, transformedP1))
-          .normalize();
-        const raySimilarity = Vector.sub(camera.position, transformedP1)
-          .normalize()
-          .dot(pNormal);
+        const { shouldCull, pNormal } = camera.shouldCull(
+          transformedP1,
+          transformedP2,
+          transformedP3
+        );
 
-        // TODO: NO MAGIC NUMBERS
-        if (raySimilarity < 0.05) return;
+        if (shouldCull) return;
 
         const projectedP1 = projectionMatrix.mult(transformedP1.matrix).vector;
         const projectedP2 = projectionMatrix.mult(transformedP2.matrix).vector;

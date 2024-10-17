@@ -2,7 +2,7 @@ import { Vector } from '../../math/vector/Vector';
 
 export const GRAPHICS_ENGINE_OPTIONS_DEFAULTS = {
   scale: 750,
-  zShift: new Vector(0, 0, 5),
+  zShift: new Vector(0, 0, 5, 0),
   nearPlane: 0.1,
   farPlane: 1000,
   fieldOfView: 90,
