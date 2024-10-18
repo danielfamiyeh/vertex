@@ -394,4 +394,18 @@ export class Vector {
       this.comps.map((comp) => comp * comp).reduce((a, b) => a + b)
     );
   }
+
+  get rowMatrix() {
+    const matrix = new Matrix(1, this.dim);
+    matrix.mat = [[...this.comps]];
+
+    return matrix;
+  }
+
+  get columnMatrix() {
+    const matrix = new Matrix(this.dim, 1);
+    this.comps.forEach((comp, i) => (matrix._mat[i] = [comp]));
+
+    return matrix;
+  }
 }

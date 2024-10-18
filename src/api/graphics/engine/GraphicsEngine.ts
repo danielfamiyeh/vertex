@@ -93,32 +93,36 @@ export class GraphicsEngine {
           zShift
         );
 
-        const transformedP1 = worldMatrix.mult(p1.matrix).vector;
-        const transformedP2 = worldMatrix.mult(p2.matrix).vector;
-        const transformedP3 = worldMatrix.mult(p3.matrix).vector;
+        const worldP1 = worldMatrix.mult(p1.matrix).vector;
+        const worldP2 = worldMatrix.mult(p2.matrix).vector;
+        const worldP3 = worldMatrix.mult(p3.matrix).vector;
 
-        const pNormal = Vector.sub(transformedP2, transformedP1)
-          .cross(Vector.sub(transformedP3, transformedP1))
+        const pNormal = Vector.sub(worldP2, worldP1)
+          .cross(Vector.sub(worldP3, worldP1))
           .normalize()
           .extend(0);
 
         const raySimilarity = Vector.sub(
-          transformedP1,
-          Vector.extended(camera.position, 1)
+          Vector.extended(camera.position, 1),
+          worldP1
         )
           .normalize()
           .dot(pNormal);
 
         // TODO: Use Camera.shouldCull
-        if (raySimilarity > 0.05) return;
+        if (raySimilarity < 0.05) return;
 
-        const viewP1 = viewMatrix.mult(transformedP1.matrix).vector;
-        const viewP2 = viewMatrix.mult(transformedP2.matrix).vector;
-        const viewP3 = viewMatrix.mult(transformedP3.matrix).vector;
+        const viewP1 = worldP1.rowMatrix.mult(viewMatrix).vector.columnMatrix;
+        const viewP2 = worldP2.rowMatrix.mult(viewMatrix).vector.columnMatrix;
+        const viewP3 = worldP3.rowMatrix.mult(viewMatrix).vector.columnMatrix;
 
-        const projectedP1 = projectionMatrix.mult(viewP1.matrix).vector;
-        const projectedP2 = projectionMatrix.mult(viewP2.matrix).vector;
-        const projectedP3 = projectionMatrix.mult(viewP3.matrix).vector;
+        const projectedP1 = projectionMatrix.mult(viewP1).vector;
+        const projectedP2 = projectionMatrix.mult(viewP2).vector;
+        const projectedP3 = projectionMatrix.mult(viewP3).vector;
+
+        // const projectedP1 = projectionMatrix.mult(worldP1.matrix).vector;
+        // const projectedP2 = projectionMatrix.mult(worldP2.matrix).vector;
+        // const projectedP3 = projectionMatrix.mult(worldP3.matrix).vector;
 
         projectedP1.comps[2] -= zOffset;
         projectedP2.comps[2] -= zOffset;

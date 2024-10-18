@@ -9,19 +9,19 @@ export class Camera {
     addEventListener('keydown', (event) => {
       console.log(event.key);
       if (event.key.toLowerCase() === 'w') {
-        this._position.y += 5;
+        this._position.y += 0.01;
       }
 
       if (event.key.toLowerCase() === 's') {
-        this._position.y -= 5;
+        this._position.y -= 0.01;
       }
 
       if (event.key.toLowerCase() === 'a') {
-        this._position.x -= 5;
+        this._position.x -= 0.01;
       }
 
       if (event.key.toLowerCase() === 'd') {
-        this._position.x += 5;
+        this._position.x += 0.01;
       }
     });
   }

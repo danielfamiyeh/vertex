@@ -39,47 +39,21 @@ export class Matrix {
       [0, 0, 0, 1],
     ];
 
+    // viewMatrix._mat = [
+    //   [newXAxis.x, newYAxis.x, newZAxis.x, 0],
+    //   [newXAxis.y, newYAxis.y, newZAxis.y, 0],
+    //   [newXAxis.z, newYAxis.z, newZAxis.z, 0],
+    //   [...Vector.scale(translation, -1).comps, 1],
+    // ];
+
     viewMatrix._mat = [
-      [newXAxis.x, newYAxis.x, newZAxis.x, 0],
-      [newXAxis.y, newYAxis.y, newZAxis.y, 0],
-      [newXAxis.z, newYAxis.z, newZAxis.z, 0],
-      [...Vector.scale(translation, 1).comps, 1],
+      [1, 0, 0, 0],
+      [0, 1, 0, 0],
+      [0, 0, 1, 0],
+      [...Vector.scale(translation, -50).comps, 1],
     ];
 
     return { cameraMatrix, viewMatrix };
-  }
-
-  static quickInverse(m: Matrix) {
-    const matrix = Matrix.identity(4);
-    matrix._mat[0][0] = m._mat[0][0];
-    matrix._mat[0][1] = m._mat[1][0];
-    matrix._mat[0][2] = m._mat[2][0];
-    matrix._mat[0][3] = 0;
-    matrix._mat[1][0] = m._mat[0][1];
-    matrix._mat[1][1] = m._mat[1][1];
-    matrix._mat[1][2] = m._mat[2][1];
-    matrix._mat[1][3] = 0;
-    matrix._mat[2][0] = m._mat[0][2];
-    matrix._mat[2][1] = m._mat[1][2];
-    matrix._mat[2][2] = m._mat[2][2];
-    matrix._mat[2][3] = 0;
-    matrix._mat[3][0] = -(
-      m._mat[3][0] * matrix._mat[0][0] +
-      m._mat[3][1] * matrix._mat[1][0] +
-      m._mat[3][2] * matrix._mat[2][0]
-    );
-    matrix._mat[3][1] = -(
-      m._mat[3][0] * matrix._mat[0][1] +
-      m._mat[3][1] * matrix._mat[1][1] +
-      m._mat[3][2] * matrix._mat[2][1]
-    );
-    matrix._mat[3][2] = -(
-      m._mat[3][0] * matrix._mat[0][2] +
-      m._mat[3][1] * matrix._mat[1][2] +
-      m._mat[3][2] * matrix._mat[2][2]
-    );
-    matrix._mat[3][3] = 1;
-    return matrix;
   }
 
   static worldMatrix(rotation: Vector, translation: Vector) {
@@ -187,19 +161,17 @@ export class Matrix {
   mult(matrix: Matrix) {
     if (this.cols !== matrix.rows)
       throw new Error(
-        `Cannot perform matrix multiplication. This matrix as number of columns: ${this.cols}, input matrix has number of rows: ${matrix.rows}`
+        `Cannot perform matrix multiplication. This matrix has number of columns: ${this.cols}, input matrix has number of rows: ${matrix.rows}`
       );
 
     let newMat = new Matrix(this.rows, matrix._mat[0].length);
 
     for (let i = 0; i < this.rows; i++) {
       for (let j = 0; j < matrix.cols; j++) {
-        let coeff = 0;
+        newMat._mat[i][j] = 0;
         for (let k = 0; k < this.cols; k++) {
-          coeff += this._mat[i][k] * matrix._mat[k][j];
+          newMat._mat[i][j] += this._mat[i][k] * matrix._mat[k][j];
         }
-
-        newMat._mat[i][j] = coeff;
       }
     }
 
