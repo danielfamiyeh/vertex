@@ -1,27 +1,28 @@
 import { Vector } from '../../math/vector/Vector';
 import { Color } from '../color/Color';
 
+const d = 0.1;
+
 export class Camera {
   constructor(
     private _position: Vector,
     private _direction = new Vector(0, 0, 1)
   ) {
     addEventListener('keydown', (event) => {
-      console.log(event.key);
       if (event.key.toLowerCase() === 'w') {
-        this._position.y += 0.01;
+        this._position.y += d;
       }
 
       if (event.key.toLowerCase() === 's') {
-        this._position.y -= 0.01;
+        this._position.y -= d;
       }
 
       if (event.key.toLowerCase() === 'a') {
-        this._position.x -= 0.01;
+        this._position.x -= d;
       }
 
       if (event.key.toLowerCase() === 'd') {
-        this._position.x += 0.01;
+        this._position.x += d;
       }
     });
   }

@@ -39,18 +39,11 @@ export class Matrix {
       [0, 0, 0, 1],
     ];
 
-    // viewMatrix._mat = [
-    //   [newXAxis.x, newYAxis.x, newZAxis.x, 0],
-    //   [newXAxis.y, newYAxis.y, newZAxis.y, 0],
-    //   [newXAxis.z, newYAxis.z, newZAxis.z, 0],
-    //   [...Vector.scale(translation, -1).comps, 1],
-    // ];
-
     viewMatrix._mat = [
-      [1, 0, 0, 0],
-      [0, 1, 0, 0],
-      [0, 0, 1, 0],
-      [...Vector.scale(translation, -50).comps, 1],
+      [newXAxis.x, newYAxis.x, newZAxis.x, 0],
+      [newXAxis.y, newYAxis.y, newZAxis.y, 0],
+      [newXAxis.z, newYAxis.z, newZAxis.z, 0],
+      [...Vector.scale(translation, -1).comps, 1],
     ];
 
     return { cameraMatrix, viewMatrix };

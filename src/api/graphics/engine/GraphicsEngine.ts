@@ -23,7 +23,7 @@ export class GraphicsEngine {
   private lastFrame = Date.now();
   private fps: number;
 
-  static angle = 0;
+  static angle = 180;
   static dt = 4;
 
   constructor(
@@ -78,7 +78,7 @@ export class GraphicsEngine {
     camera.position.__proto__ = Vector.prototype;
     camera.direction.__proto__ = Vector.prototype;
 
-    const { viewMatrix, cameraMatrix } = Matrix.viewMatrix(camera);
+    const { viewMatrix } = Matrix.viewMatrix(camera);
 
     // GraphicsEngine.angle += GraphicsEngine.dt;
 
@@ -119,10 +119,6 @@ export class GraphicsEngine {
         const projectedP1 = projectionMatrix.mult(viewP1).vector;
         const projectedP2 = projectionMatrix.mult(viewP2).vector;
         const projectedP3 = projectionMatrix.mult(viewP3).vector;
-
-        // const projectedP1 = projectionMatrix.mult(worldP1.matrix).vector;
-        // const projectedP2 = projectionMatrix.mult(worldP2.matrix).vector;
-        // const projectedP3 = projectionMatrix.mult(worldP3.matrix).vector;
 
         projectedP1.comps[2] -= zOffset;
         projectedP2.comps[2] -= zOffset;
