@@ -10,7 +10,10 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "jsx": "react"
+    "baseUrl": "./",
+    "paths": {
+      "@vertex/*": ["./src/*"]
+    }
   },
   "include": [
     "src/demo.ts"

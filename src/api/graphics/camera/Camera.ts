@@ -1,28 +1,43 @@
 import { Vector } from '../../math/vector/Vector';
 import { Color } from '../color/Color';
 
-const d = 0.1;
-
 export class Camera {
   constructor(
     private _position: Vector,
-    private _direction = new Vector(0, 0, 1)
+    private _direction = new Vector(0, 0, 1),
+    private _displacement = 0.2
   ) {
     addEventListener('keydown', (event) => {
-      if (event.key.toLowerCase() === 'w') {
-        this._position.y += d;
+      if (event.key === 'ArrowUp') {
+        this._position.y += _displacement;
       }
 
-      if (event.key.toLowerCase() === 's') {
-        this._position.y -= d;
+      if (event.key === 'ArrowDown') {
+        this._position.y -= _displacement;
+      }
+
+      if (event.key === 'ArrowLeft') {
+        this._position.x -= _displacement;
+      }
+
+      if (event.key === 'ArrowRight') {
+        this._position.x += _displacement;
       }
 
       if (event.key.toLowerCase() === 'a') {
-        this._position.x -= d;
+        this._direction.x -= _displacement / 2;
       }
 
       if (event.key.toLowerCase() === 'd') {
-        this._position.x += d;
+        this._direction.x += _displacement / 2;
+      }
+
+      if (event.key.toLowerCase() === 'w') {
+        this._position.add(Vector.scale(this._direction, this._displacement));
+      }
+
+      if (event.key.toLowerCase() === 's') {
+        this._position.sub(Vector.scale(this._direction, this._displacement));
       }
     });
   }
@@ -60,5 +75,13 @@ export class Camera {
 
   get direction() {
     return this._direction;
+  }
+
+  get displacement() {
+    return this._displacement;
+  }
+
+  set displacement(d: number) {
+    this._displacement = d;
   }
 }

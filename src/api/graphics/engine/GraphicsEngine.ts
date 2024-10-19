@@ -110,7 +110,7 @@ export class GraphicsEngine {
           .dot(pNormal);
 
         // TODO: Use Camera.shouldCull
-        if (raySimilarity < 0.05) return;
+        if (raySimilarity < 0) return;
 
         const viewP1 = worldP1.rowMatrix.mult(viewMatrix).vector.columnMatrix;
         const viewP2 = worldP2.rowMatrix.mult(viewMatrix).vector.columnMatrix;
