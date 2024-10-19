@@ -1,12 +1,22 @@
 import { Vector } from '../../math/vector/Vector';
+import { CameraFrustrum } from './Camera.types';
 import { Color } from '../color/Color';
+import { Plane } from '../../math/plane/Plane';
 
 export class Camera {
+  private _frustrum: CameraFrustrum;
+
   constructor(
     private _position: Vector,
+    private near: number,
+    private far: number,
     private _direction = new Vector(0, 0, 1),
     private _displacement = 0.2
   ) {
+    this._frustrum = {
+      near: new Plane(new Vector(0, 0, near), new Vector(0, 0, 1)),
+    };
+
     addEventListener('keydown', (event) => {
       if (event.key === 'ArrowUp') {
         this._position.y += _displacement;
@@ -83,5 +93,9 @@ export class Camera {
 
   set displacement(d: number) {
     this._displacement = d;
+  }
+
+  get frustrum() {
+    return this._frustrum;
   }
 }

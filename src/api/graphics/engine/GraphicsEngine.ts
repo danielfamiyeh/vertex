@@ -57,7 +57,11 @@ export class GraphicsEngine {
     this.projectionMatrix = projectionMatrix;
     this.zOffset = zOffset;
 
-    this.camera = new Camera(_options.cameraPosition);
+    this.camera = new Camera(
+      _options.cameraPosition,
+      _options.nearPlane,
+      _options.farPlane
+    );
 
     this.meshes = [];
 
@@ -116,24 +120,40 @@ export class GraphicsEngine {
         const viewP2 = worldP2.rowMatrix.mult(viewMatrix).vector.columnMatrix;
         const viewP3 = worldP3.rowMatrix.mult(viewMatrix).vector.columnMatrix;
 
-        const projectedP1 = projectionMatrix.mult(viewP1).vector;
-        const projectedP2 = projectionMatrix.mult(viewP2).vector;
-        const projectedP3 = projectionMatrix.mult(viewP3).vector;
+        const clippedTriangles = camera.frustrum.near.clipTriangle([
+          viewP1.vector,
+          viewP2.vector,
+          viewP3.vector,
+        ]);
 
-        projectedP1.comps[2] -= zOffset;
-        projectedP2.comps[2] -= zOffset;
-        projectedP3.comps[2] -= zOffset;
+        clippedTriangles.forEach(
+          ([clippedP1, clippedP2, clippedP3]: Vector[]) => {
+            const projectedP1 = projectionMatrix.mult(
+              clippedP1.columnMatrix
+            ).vector;
+            const projectedP2 = projectionMatrix.mult(
+              clippedP2.columnMatrix
+            ).vector;
+            const projectedP3 = projectionMatrix.mult(
+              clippedP3.columnMatrix
+            ).vector;
 
-        const finalP1 = Vector.div(projectedP1, projectedP1.z);
-        const finalP2 = Vector.div(projectedP2, projectedP2.z);
-        const finalP3 = Vector.div(projectedP3, projectedP3.z);
+            projectedP1.comps[2] -= zOffset;
+            projectedP2.comps[2] -= zOffset;
+            projectedP3.comps[2] -= zOffset;
 
-        raster.push({
-          face: [finalP1, finalP2, finalP3],
-          zMidpoint: (projectedP1.z + projectedP2.z + projectedP3.z) / 3,
-          pNormal,
-          color: '',
-        });
+            const finalP1 = Vector.div(projectedP1, projectedP1.z);
+            const finalP2 = Vector.div(projectedP2, projectedP2.z);
+            const finalP3 = Vector.div(projectedP3, projectedP3.z);
+
+            raster.push({
+              face: [finalP1, finalP2, finalP3],
+              zMidpoint: (projectedP1.z + projectedP2.z + projectedP3.z) / 3,
+              pNormal,
+              color: '',
+            });
+          }
+        );
       });
     });
 

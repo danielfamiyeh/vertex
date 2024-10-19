@@ -70,35 +70,31 @@ export class Plane {
    * @param {Triangle} input      Triangle to clip against plane
    * @returns {Array<Triangle>}   Array of triangles produced by clipping input
    */
-  clipTriangle(input: Vector[]): Array<Vector[]> {
+  clipTriangle(input: Vector[]): Vector[][] {
     const newTriangles: Array<Vector[]> = [];
     const points: { inside: Array<Vector>; outside: Array<Vector> } = {
       inside: [],
       outside: [],
     };
 
-    const distances = input.map(
-      (point) => (point) => this.pointDistance(point)
-    );
+    const distances = input.map((point) => this.pointDistance(point));
 
     distances.forEach((dist, i) => {
-      points[-dist >= 0 ? 'inside' : 'outside'].push(input[i]);
+      points[dist >= 0 ? 'inside' : 'outside'].push(input[i]);
     });
 
     switch (points.inside.length) {
       case 1: {
-        if (points.outside.length === 2) {
-          // Clip triangle against ray of intersection
-          const newTriangle = input.map((point) => point.copy());
+        // Clip triangle against ray of intersection
+        const newTriangle = input.map((point) => point.copy());
 
-          // Preserve inside point
-          newTriangle[0] = points.inside[0];
+        // Preserve inside point
+        newTriangle[0] = points.inside[0];
 
-          // Get new points based on ray intersection from preserved point and plane
-          points.outside.forEach((point) =>
-            this.intersectRay(newTriangle[0], point)
-          );
-        }
+        // Get new points based on ray intersection from preserved point and plane
+        points.outside.forEach((point) =>
+          this.intersectRay(newTriangle[0], point)
+        );
         break;
       }
 
@@ -107,35 +103,34 @@ export class Plane {
          * Two points lie inside plane so clip triangle against plane
          * Split quad formed by clipping into two triangles
          */
-        if (points.outside.length === 1) {
-          const newTriangle1 = input.map((point) => point.copy());
-          const newTriangle2 = input.map((point) => point.copy());
+        const newTriangle1 = input.map((point) => point.copy());
+        const newTriangle2 = input.map((point) => point.copy());
 
-          // First triangle has two inside points and one at plane intersection
-          newTriangle1[0] = points.inside[0];
-          newTriangle1[1] = points.inside[1];
-          newTriangle1[2] = this.intersectRay(
-            points.inside[0],
-            points.outside[0]
-          ) as Vector;
+        // First triangle has two inside points and one at plane intersection
+        newTriangle1[0] = points.inside[0];
+        newTriangle1[1] = points.inside[1];
+        newTriangle1[2] = this.intersectRay(
+          points.inside[0],
+          points.outside[0]
+        ) as Vector;
 
-          /**
-           * Second triangle is defined by one inside point, the clipped point of the other triangle
-           * and a new clipped point on the other side of the triangle
-           */
-          newTriangle2[0] = points.inside[1];
-          newTriangle2[1] = newTriangle1[2];
-          newTriangle2[2] = this.intersectRay(
-            points.inside[1],
-            points.outside[0]
-          ) as Vector;
-        }
+        /**
+         * Second triangle is defined by one inside point, the clipped point of the other triangle
+         * and a new clipped point on the other side of the triangle
+         */
+        newTriangle2[0] = points.inside[1];
+        newTriangle2[1] = newTriangle1[2];
+        newTriangle2[2] = this.intersectRay(
+          points.inside[1],
+          points.outside[0]
+        ) as Vector;
         break;
       }
 
-      case 3:
+      case 3: {
         newTriangles.push(input.map((point) => point.copy()));
         break;
+      }
     }
 
     return newTriangles;
