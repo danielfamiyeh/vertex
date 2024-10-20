@@ -40,6 +40,8 @@ export class GraphicsEngine {
       options
     );
 
+    _options.camera.near *= -1;
+
     this.ctx.strokeStyle = 'white';
     this.ctx.fillStyle = 'white';
 
@@ -49,18 +51,18 @@ export class GraphicsEngine {
 
     const { projectionMatrix, zOffset } = Matrix.projectionMatrix(
       canvas,
-      _options.nearPlane,
-      _options.farPlane,
-      _options.fieldOfView
+      _options.camera.near,
+      _options.camera.far,
+      _options.camera.fieldOfView
     );
 
     this.projectionMatrix = projectionMatrix;
     this.zOffset = zOffset;
 
     this.camera = new Camera(
-      _options.cameraPosition,
-      _options.nearPlane,
-      _options.farPlane
+      _options.camera.position,
+      _options.camera.near,
+      _options.camera.far
     );
 
     this.meshes = [];
@@ -78,6 +80,7 @@ export class GraphicsEngine {
     const { meshes, zShift, camera, projectionMatrix, zOffset } = args;
 
     const raster: Raster = [];
+    const toRaster: Vector[][] = [];
 
     camera.position.__proto__ = Vector.prototype;
     camera.direction.__proto__ = Vector.prototype;

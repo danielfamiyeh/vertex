@@ -15,6 +15,7 @@ export class Camera {
   ) {
     this._frustrum = {
       near: new Plane(new Vector(0, 0, near), new Vector(0, 0, 1)),
+      far: new Plane(new Vector(0, 0, far), new Vector(0, 0, -1)),
     };
 
     addEventListener('keydown', (event) => {

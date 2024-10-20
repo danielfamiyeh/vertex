@@ -6,10 +6,12 @@ import { Mesh } from '../mesh/Mesh';
 export type GraphicsEngineOptions = {
   scale?: number;
   zShift?: Vector;
-  nearPlane?: number;
-  farPlane?: number;
-  fieldOfView?: number;
-  useWorker?: boolean;
+  camera?: {
+    near: number;
+    far: number;
+    fieldOfView: number;
+    position: Vector;
+  };
   fps?: number;
 };
 
