@@ -80,7 +80,8 @@ export class GraphicsEngine {
     GraphicsEngine.angle += GraphicsEngine.dt;
 
     entityIds.forEach((id) => {
-      const mesh = entities[id].mesh;
+      const entity = entities[id];
+      const mesh = entity.mesh;
       if (!mesh) return;
       mesh.triangles.forEach(([p1, p2, p3]) => {
         const worldMatrix = Matrix.worldMatrix(
@@ -91,6 +92,13 @@ export class GraphicsEngine {
         const worldP1 = worldMatrix.mult(p1.matrix).vector;
         const worldP2 = worldMatrix.mult(p2.matrix).vector;
         const worldP3 = worldMatrix.mult(p3.matrix).vector;
+
+        [worldP1, worldP2, worldP3].forEach((worldPoint) => {
+          if (!entity.rigidBody?.position) return;
+          const { position } = entity.rigidBody;
+
+          worldPoint.add(new Vector(position.x, position.y, position.z, 0));
+        });
 
         const pNormal = Vector.sub(worldP2, worldP1)
           .cross(Vector.sub(worldP3, worldP1))
@@ -136,6 +144,7 @@ export class GraphicsEngine {
             const finalP1 = Vector.div(projectedP1, projectedP1.z).scale(
               this.scale
             );
+
             const finalP2 = Vector.div(projectedP2, projectedP2.z).scale(
               this.scale
             );
@@ -143,9 +152,11 @@ export class GraphicsEngine {
               this.scale
             );
 
+            const finalPoints = [finalP1, finalP2, finalP3];
+
             toRaster.push(
               new Triangle(
-                [finalP1, finalP2, finalP3],
+                finalPoints,
                 (projectedP1.z + projectedP2.z + projectedP3.z) / 3,
                 pNormal,
                 ''

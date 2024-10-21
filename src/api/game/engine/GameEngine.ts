@@ -31,6 +31,8 @@ export class GameEngine {
     if (!this.entities[id]) this.entities[id] = new Entity(id);
 
     this.entities[id].mesh = mesh;
+
+    return this.entities[id];
   }
 
   get physics() {
