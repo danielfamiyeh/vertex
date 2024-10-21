@@ -56,7 +56,7 @@ export class Matrix {
     const zRotation = Matrix.zRotation(rotation.z);
     const _translation = Matrix.translation(translation);
 
-    return _translation.mult(xRotation.mult(zRotation));
+    return _translation.mult(xRotation.mult(yRotation.mult(zRotation)));
   }
 
   static projectionMatrix(
@@ -74,7 +74,7 @@ export class Matrix {
     const fy = fieldOfViewRadians;
     const fz = farPlane / (farPlane - nearPlane);
 
-    projectionMatrix._mat[0][0] = aspectRatio * fx;
+    projectionMatrix._mat[0][0] = fx;
     projectionMatrix._mat[1][1] = fy;
     projectionMatrix._mat[2][2] = fz;
 
