@@ -6,6 +6,7 @@ import { GraphicsEngineOptions } from './GraphicsEngine.types';
 import { GRAPHICS_ENGINE_OPTIONS_DEFAULTS } from './GraphicsEngine.utils';
 import { Triangle } from '../triangle/Triangle';
 import { cameraBounds } from '../camera/Camera.utils';
+import { Entity } from '@vertex/api/game/entity/Entity';
 
 let printed = false;
 export class GraphicsEngine {
@@ -16,8 +17,7 @@ export class GraphicsEngine {
   private zShift: Vector;
   private scale: number;
   private camera: Camera;
-  private meshes: Mesh[];
-  public queue: Triangle[];
+  private _meshes: Record<string, Mesh> = {};
   private lastFrame = Date.now();
   private fps: number;
 
@@ -65,26 +65,26 @@ export class GraphicsEngine {
       right: canvas.width,
     });
 
-    this.meshes = [];
-
-    this.queue = [];
-    window.__VERTEX_GAME_ENGINE__.graphics = this;
+    this._meshes = {};
   }
 
-  geometry() {
-    const { meshes, zShift, camera, projectionMatrix, zOffset } = this;
+  geometry(entities: Record<string, Entity>) {
+    const { zShift, camera, projectionMatrix, zOffset } = this;
+    const entityIds = Object.keys(entities);
 
     const raster: Triangle[] = [];
     const toRaster: Triangle[] = [];
 
     const { viewMatrix } = Matrix.viewMatrix(camera);
 
-    // GraphicsEngine.angle += GraphicsEngine.dt;
+    GraphicsEngine.angle += GraphicsEngine.dt;
 
-    meshes.forEach((mesh) => {
+    entityIds.forEach((id) => {
+      const mesh = entities[id].mesh;
+      if (!mesh) return;
       mesh.triangles.forEach(([p1, p2, p3]) => {
         const worldMatrix = Matrix.worldMatrix(
-          new Vector(GraphicsEngine.angle, 0, GraphicsEngine.angle),
+          new Vector(0, GraphicsEngine.angle, 0),
           zShift
         );
 
@@ -220,7 +220,7 @@ export class GraphicsEngine {
     ctx?.translate(-canvas.width / 2, -canvas.height / 2);
   }
 
-  static async loadMesh(url: string) {
+  async loadMesh(url: string) {
     const res = await fetch(url);
     const file = await res.text();
 
@@ -264,27 +264,25 @@ export class GraphicsEngine {
       }
     });
 
-    return new Mesh(meshData.name, meshData.vertices, meshData.triangles);
+    const mesh = new Mesh(meshData.name, meshData.vertices, meshData.triangles);
+    this._meshes[url] = mesh;
+    return mesh;
   }
 
-  async loadMeshes(...urls: string[]) {
-    const meshes = urls.map((url) => GraphicsEngine.loadMesh(url));
-
-    return await Promise.all(meshes).then((meshes) => {
-      this.meshes.push(...meshes);
-    });
-  }
-
-  render() {
+  render(entities: Record<string, Entity>) {
     const now = Date.now();
     const interval = 1000 / this.fps;
     const delta = now - this.lastFrame;
 
     if (delta > interval) {
-      this.screen(this.rasterize(this.geometry()));
+      this.screen(this.rasterize(this.geometry(entities)));
       this.lastFrame = now - (delta % interval);
     }
 
-    window.requestAnimationFrame(this.render.bind(this));
+    window.requestAnimationFrame(this.render.bind(this, entities));
+  }
+
+  get meshes() {
+    return this._meshes;
   }
 }

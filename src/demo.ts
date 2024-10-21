@@ -1,12 +1,21 @@
-import { GraphicsEngine } from './api/graphics/engine/GraphicsEngine';
+import { GameEngine } from './api/game/engine/GameEngine';
+import { Entity } from './api/game/entity/Entity';
+import { Vector } from './api/math/vector/Vector';
 
-window.__VERTEX_GAME_ENGINE__ = { graphics: {} as GraphicsEngine };
-
-const graphicsEngine = new GraphicsEngine(undefined, {
-  fps: 30,
+const gameEngine = new GameEngine({
+  graphics: {
+    fps: 30,
+    zShift: new Vector(0, 0, 50),
+  },
+  physics: {},
 });
-const meshes = ['http://127.0.0.1:8080/mountains.obj'];
 
-graphicsEngine
-  .loadMeshes(...meshes)
-  .then(graphicsEngine.render.bind(graphicsEngine));
+(async () => {
+  gameEngine.entities.earth = new Entity('earth');
+  await gameEngine.loadEntityMesh('earth', 'http://127.0.0.1:8080/sphere.obj');
+
+  gameEngine.entities.mars = new Entity('mars');
+  await gameEngine.loadEntityMesh('mars', 'http://127.0.0.1:8080/sphere.obj');
+
+  gameEngine.start();
+})();
