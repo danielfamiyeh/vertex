@@ -24,13 +24,29 @@ const gameEngine = new GameEngine({
     'http://127.0.0.1:8080/sphere.obj'
   );
 
-  earth.rigidBody = new RigidBody({
-    position: new Vector(5, 5, 0),
-    direction: new Vector(0, 0, 0),
+  mars.rigidBody = new RigidBody({
+    position: new Vector(0, 0, 0),
+    rotation: new Vector(0, 0, 0),
     mass: 0,
   });
 
-  console.log(earth);
+  earth.rigidBody = new RigidBody({
+    position: new Vector(5, 5, 0),
+    rotation: new Vector(30, 0, 0),
+    mass: 0,
+  });
+
+  earth.rigidBody.transforms.moveBack = () => {
+    earth.rigidBody?.position.sub(new Vector(0, 0, -1));
+  };
+
+  earth.rigidBody.transforms.rotate = () => {
+    earth.rigidBody?.rotation.add(new Vector(0, 4, 0));
+  };
+
+  mars.rigidBody?.transforms.rotate = () => {
+    mars.rigidBody?.rotation.add(new Vector(0, 4, 0));
+  };
 
   gameEngine.start();
 })();

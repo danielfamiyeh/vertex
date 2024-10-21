@@ -2,6 +2,6 @@ import { Vector } from '../../math/vector/Vector';
 
 export type RigidBodyOptions = {
   position: Vector;
-  direction: Vector;
+  rotation: Vector;
   mass: number;
 };

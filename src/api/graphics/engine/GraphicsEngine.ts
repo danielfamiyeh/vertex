@@ -18,11 +18,8 @@ export class GraphicsEngine {
   private scale: number;
   private camera: Camera;
   private _meshes: Record<string, Mesh> = {};
-  private lastFrame = Date.now();
-  private fps: number;
 
   static angle = 180;
-  static dt = 4;
 
   constructor(
     private canvas = document.getElementById('canvas') as HTMLCanvasElement,
@@ -41,7 +38,6 @@ export class GraphicsEngine {
     this.ctx.strokeStyle = 'white';
     this.ctx.fillStyle = 'white';
 
-    this.fps = _options.fps;
     this.zShift = _options.zShift;
     this.scale = _options.scale;
 
@@ -77,15 +73,13 @@ export class GraphicsEngine {
 
     const { viewMatrix } = Matrix.viewMatrix(camera);
 
-    GraphicsEngine.angle += GraphicsEngine.dt;
-
     entityIds.forEach((id) => {
       const entity = entities[id];
       const mesh = entity.mesh;
       if (!mesh) return;
       mesh.triangles.forEach(([p1, p2, p3]) => {
         const worldMatrix = Matrix.worldMatrix(
-          new Vector(0, GraphicsEngine.angle, 0),
+          entity.rigidBody?.rotation ?? new Vector(0, 0, 0),
           zShift
         );
 
@@ -281,16 +275,7 @@ export class GraphicsEngine {
   }
 
   render(entities: Record<string, Entity>) {
-    const now = Date.now();
-    const interval = 1000 / this.fps;
-    const delta = now - this.lastFrame;
-
-    if (delta > interval) {
-      this.screen(this.rasterize(this.geometry(entities)));
-      this.lastFrame = now - (delta % interval);
-    }
-
-    window.requestAnimationFrame(this.render.bind(this, entities));
+    this.screen(this.rasterize(this.geometry(entities)));
   }
 
   get meshes() {
