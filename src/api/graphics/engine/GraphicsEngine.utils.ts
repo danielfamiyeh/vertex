@@ -2,11 +2,15 @@ import { Vector } from '../../math/vector/Vector';
 
 export const GRAPHICS_ENGINE_OPTIONS_DEFAULTS = {
   scale: 750,
-  zShift: new Vector(0, 0, 5),
-  nearPlane: 0.1,
-  farPlane: 1000,
-  fieldOfView: 90,
-  cameraPosition: new Vector(0, 0, 0),
-  useWorker: true,
+  zShift: new Vector(0, 0, 5, 0),
+  camera: {
+    near: 0.01,
+    far: 1000,
+    fieldOfView: 90,
+    position: new Vector(0, 0, 0),
+    direction: new Vector(0, 0, 1),
+    displacement: 0.5,
+  },
+  useWorker: false,
   fps: 30,
 };

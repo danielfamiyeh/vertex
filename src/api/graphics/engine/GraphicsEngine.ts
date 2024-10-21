@@ -2,37 +2,33 @@ import { Mesh } from '../mesh/Mesh';
 import { Camera } from '../camera/Camera';
 import { Matrix } from '../../math/matrix/Matrix';
 import { Vector } from '../../math/vector/Vector';
-import {
-  GeometryPipelineArgs,
-  GraphicsEngineOptions,
-  Raster,
-} from './GraphicsEngine.types';
+import { GraphicsEngineOptions } from './GraphicsEngine.types';
 import { GRAPHICS_ENGINE_OPTIONS_DEFAULTS } from './GraphicsEngine.utils';
+import { Triangle } from '../triangle/Triangle';
+import { cameraBounds } from '../camera/Camera.utils';
 
-import { getProjectionMatrix } from '../../math/matrix/Matrix.utils';
-
+let printed = false;
 export class GraphicsEngine {
   // TODO: Underscore all private class members
   private ctx: CanvasRenderingContext2D | null;
   private projectionMatrix: Matrix;
-  private worker?: Worker;
   private zOffset: number;
   private zShift: Vector;
   private scale: number;
   private camera: Camera;
   private meshes: Mesh[];
-  public queue: Raster[];
+  public queue: Triangle[];
   private lastFrame = Date.now();
   private fps: number;
 
-  static angle = 0;
+  static angle = 180;
   static dt = 4;
 
   constructor(
     private canvas = document.getElementById('canvas') as HTMLCanvasElement,
     options?: GraphicsEngineOptions
   ) {
-    this.ctx = this.canvas.getContext('2d');
+    this.ctx = this.canvas.getContext('2d', { alpha: false });
 
     if (!this.ctx) throw new Error('Cannot access Canvas context');
 
@@ -49,122 +45,175 @@ export class GraphicsEngine {
     this.zShift = _options.zShift;
     this.scale = _options.scale;
 
-    const { projectionMatrix, zOffset } = getProjectionMatrix(
+    const { projectionMatrix, zOffset } = Matrix.projectionMatrix(
       canvas,
-      _options.nearPlane,
-      _options.farPlane,
-      _options.fieldOfView
+      _options.camera.near,
+      _options.camera.far,
+      _options.camera.fieldOfView
     );
 
     this.projectionMatrix = projectionMatrix;
     this.zOffset = zOffset;
 
-    this.camera = new Camera(_options.cameraPosition);
+    this.camera = new Camera({
+      position: _options.camera.position,
+      direction: _options.camera.direction,
+      displacement: _options.camera.displacement,
+      near: _options.camera.near,
+      far: _options.camera.far,
+      bottom: canvas.height,
+      right: canvas.width,
+    });
 
     this.meshes = [];
 
-    if (_options.useWorker && Worker) {
-      this.worker = new Worker('./pipeline-worker.ts');
-      this.worker.addEventListener('message', this.handleWorkerRender);
-    }
-
     this.queue = [];
-    window.vertexGameEngine.graphics = this;
+    window.__VERTEX_GAME_ENGINE__.graphics = this;
   }
 
-  static geometry(args: GeometryPipelineArgs) {
-    const { meshes, zShift, camera, projectionMatrix, zOffset } = args;
+  geometry() {
+    const { meshes, zShift, camera, projectionMatrix, zOffset } = this;
 
-    const raster: Raster = [];
-    GraphicsEngine.angle += GraphicsEngine.dt;
+    const raster: Triangle[] = [];
+    const toRaster: Triangle[] = [];
+
+    const { viewMatrix } = Matrix.viewMatrix(camera);
+
+    // GraphicsEngine.angle += GraphicsEngine.dt;
 
     meshes.forEach((mesh) => {
       mesh.triangles.forEach(([p1, p2, p3]) => {
-        // const transformedP1 = Vector.add(p1, zShift);
-        // const transformedP2 = Vector.add(p2, zShift);
-        // const transformedP3 = Vector.add(p3, zShift);
+        const worldMatrix = Matrix.worldMatrix(
+          new Vector(GraphicsEngine.angle, 0, GraphicsEngine.angle),
+          zShift
+        );
 
-        p1.__proto__ = Vector.prototype;
-        p2.__proto__ = Vector.prototype;
-        p3.__proto__ = Vector.prototype;
+        const worldP1 = worldMatrix.mult(p1.matrix).vector;
+        const worldP2 = worldMatrix.mult(p2.matrix).vector;
+        const worldP3 = worldMatrix.mult(p3.matrix).vector;
 
-        const transformedP1 = Vector.rotX(
-          Vector.rotZ(p1, GraphicsEngine.angle),
-          GraphicsEngine.angle
-        ).add(zShift);
-        const transformedP2 = Vector.rotX(
-          Vector.rotZ(p2, GraphicsEngine.angle),
-          GraphicsEngine.angle
-        ).add(zShift);
-        const transformedP3 = Vector.rotX(
-          Vector.rotZ(p3, GraphicsEngine.angle),
-          GraphicsEngine.angle
-        ).add(zShift);
+        const pNormal = Vector.sub(worldP2, worldP1)
+          .cross(Vector.sub(worldP3, worldP1))
+          .normalize()
+          .extend(0);
 
-        const pNormal = Vector.sub(transformedP2, transformedP1)
-          .cross(Vector.sub(transformedP3, transformedP1))
-          .normalize();
-        const raySimilarity = Vector.sub(camera.position, transformedP1)
+        const raySimilarity = Vector.sub(
+          Vector.extended(camera.position, 1),
+          worldP1
+        )
           .normalize()
           .dot(pNormal);
 
-        // TODO: NO MAGIC NUMBERS
-        if (raySimilarity < 0.05) return;
+        // TODO: Use Camera.shouldCull
+        if (raySimilarity < 0) return;
 
-        const projectedP1 = projectionMatrix.mult(transformedP1.matrix).vector;
-        const projectedP2 = projectionMatrix.mult(transformedP2.matrix).vector;
-        const projectedP3 = projectionMatrix.mult(transformedP3.matrix).vector;
+        const viewP1 = worldP1.rowMatrix.mult(viewMatrix).vector.columnMatrix;
+        const viewP2 = worldP2.rowMatrix.mult(viewMatrix).vector.columnMatrix;
+        const viewP3 = worldP3.rowMatrix.mult(viewMatrix).vector.columnMatrix;
 
-        projectedP1.comps[2] -= zOffset;
-        projectedP2.comps[2] -= zOffset;
-        projectedP3.comps[2] -= zOffset;
+        const clippedTriangles = camera.frustrum.near.clipTriangle([
+          viewP1.vector,
+          viewP2.vector,
+          viewP3.vector,
+        ]);
 
-        const finalP1 = Vector.div(projectedP1, projectedP1.z);
-        const finalP2 = Vector.div(projectedP2, projectedP2.z);
-        const finalP3 = Vector.div(projectedP3, projectedP3.z);
+        clippedTriangles.forEach(
+          ([clippedP1, clippedP2, clippedP3]: Vector[]) => {
+            const projectedP1 = projectionMatrix.mult(
+              clippedP1.columnMatrix
+            ).vector;
+            const projectedP2 = projectionMatrix.mult(
+              clippedP2.columnMatrix
+            ).vector;
+            const projectedP3 = projectionMatrix.mult(
+              clippedP3.columnMatrix
+            ).vector;
 
-        raster.push({
-          face: [finalP1, finalP2, finalP3],
-          zMidpoint: (projectedP1.z + projectedP2.z + projectedP3.z) / 3,
-          pNormal,
-          color: '',
-        });
+            projectedP1.comps[2] -= zOffset;
+            projectedP2.comps[2] -= zOffset;
+            projectedP3.comps[2] -= zOffset;
+
+            const finalP1 = Vector.div(projectedP1, projectedP1.z).scale(
+              this.scale
+            );
+            const finalP2 = Vector.div(projectedP2, projectedP2.z).scale(
+              this.scale
+            );
+            const finalP3 = Vector.div(projectedP3, projectedP3.z).scale(
+              this.scale
+            );
+
+            toRaster.push(
+              new Triangle(
+                [finalP1, finalP2, finalP3],
+                (projectedP1.z + projectedP2.z + projectedP3.z) / 3,
+                pNormal,
+                ''
+              )
+            );
+          }
+        );
       });
+    });
+
+    toRaster.sort((a, b) => b.zMidpoint - a.zMidpoint);
+
+    toRaster.forEach((triangle) => {
+      const queue: Triangle[] = [];
+      queue.push(triangle);
+
+      cameraBounds.forEach((bound) => {
+        const _triangle = queue.pop();
+        if (!_triangle) return;
+
+        const clippedTriangles: Triangle[] = camera.frustrum[bound]
+          .clipTriangle(_triangle.points)
+          .map(
+            (points) =>
+              new Triangle(
+                points,
+                _triangle.zMidpoint,
+                _triangle.worldNormal,
+                _triangle.color
+              )
+          );
+
+        queue.push(...clippedTriangles);
+      });
+
+      raster.push(...queue);
     });
 
     return raster;
   }
 
-  static rasterize(raster: Raster, camera: Camera) {
-    raster.sort((a, b) => b.zMidpoint - a.zMidpoint);
-
+  rasterize(raster: Triangle[]) {
     raster.forEach((rasterObj) => {
-      const { color } = camera.illuminate(rasterObj.pNormal);
+      const { color } = this.camera.illuminate(rasterObj.worldNormal);
       rasterObj.color = `#${color.toHex()}`;
     });
 
     return raster;
   }
 
-  screen(raster: Raster) {
+  screen(raster: Triangle[]) {
     const { ctx, canvas, scale } = this;
     ctx?.clearRect(0, 0, canvas.width, canvas.height);
     ctx?.translate(canvas.width / 2, canvas.height / 2);
     raster.forEach((raster) => {
       if (!ctx) return;
-      raster.face.forEach((v) => (v.__proto__ = Vector.prototype));
 
       const {
-        face: [p1, p2, p3],
+        points: [p1, p2, p3],
         color,
       } = raster;
       ctx.fillStyle = color;
 
       ctx?.beginPath();
-      ctx?.moveTo(scale * p1.x, -scale * p1.y);
-      ctx?.lineTo(scale * p2.x, -scale * p2.y);
-      ctx?.lineTo(scale * p3.x, -scale * p3.y);
-      ctx?.lineTo(scale * p1.x, -scale * p1.y);
+      ctx?.moveTo(p1.x, -p1.y);
+      ctx?.lineTo(p2.x, -p2.y);
+      ctx?.lineTo(p3.x, -p3.y);
+      ctx?.lineTo(p1.x, -p1.y);
       ctx?.fill();
     });
 
@@ -190,7 +239,8 @@ export class GraphicsEngine {
             ...line
               .slice(2)
               .split(' ')
-              .map((v) => parseFloat(v))
+              .map((v) => parseFloat(v)),
+            1
           )
         );
       } else if (line.startsWith('f')) {
@@ -225,44 +275,13 @@ export class GraphicsEngine {
     });
   }
 
-  private handleWorkerRender(event: MessageEvent) {
-    window.vertexGameEngine.graphics?.queue.push(event.data);
-  }
-
   render() {
-    if (this.worker) {
-      this.worker?.postMessage({
-        projectionMatrix: this.projectionMatrix,
-        zOffset: this.zOffset,
-        meshes: this.meshes,
-        zShift: this.zShift,
-        camera: this.camera,
-        scale: this.scale,
-      });
-    }
-
-    const interval = 1000 / this.fps;
     const now = Date.now();
+    const interval = 1000 / this.fps;
     const delta = now - this.lastFrame;
 
     if (delta > interval) {
-      if (this.worker) {
-        const raster = this.queue.shift();
-        if (raster) this.screen(raster);
-      } else {
-        this.screen(
-          GraphicsEngine.rasterize(
-            GraphicsEngine.geometry({
-              projectionMatrix: this.projectionMatrix,
-              zOffset: this.zOffset,
-              meshes: this.meshes,
-              zShift: this.zShift,
-              camera: this.camera,
-            }),
-            this.camera
-          )
-        );
-      }
+      this.screen(this.rasterize(this.geometry()));
       this.lastFrame = now - (delta % interval);
     }
 

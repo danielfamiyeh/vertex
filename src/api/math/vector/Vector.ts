@@ -143,7 +143,7 @@ export class Vector {
    * @returns {Vector} Scaled vector
    */
   static scale(v: Vector, lambda: number): Vector {
-    return new Vector(...v.comps.map((comp) => comp * lambda));
+    return new Vector(...v.comps.map((comp) => (!comp ? comp : comp * lambda)));
   }
 
   /**
@@ -210,7 +210,7 @@ export class Vector {
     const j = a[0] * b[2] - a[2] * b[0];
     const k = a[0] * b[1] - a[1] * b[0];
 
-    return new Vector(i, -j, k);
+    return new Vector(i, j === 0 ? j : -j, k);
   }
 
   /**
@@ -274,7 +274,7 @@ export class Vector {
    */
   normalize(): Vector {
     const mag = this.mag;
-    this.comps = this.comps.map((comp) => comp / mag);
+    this.comps = this.comps.map((comp) => comp / (mag || 1));
 
     return this;
   }
@@ -286,7 +286,9 @@ export class Vector {
    * @returns {Vector} Scaled vector
    */
   scale(lambda: number): Vector {
-    return new Vector(...this.comps.map((comp) => comp * lambda));
+    return new Vector(
+      ...this.comps.map((comp) => (!comp ? comp : comp * lambda))
+    );
   }
 
   /**
@@ -346,10 +348,10 @@ export class Vector {
   }
 
   get matrix() {
-    let newMat = new Matrix(3, 1);
-    newMat.mat[0] = [this.x];
-    newMat.mat[1] = [this.y];
-    newMat.mat[2] = [this.z];
+    let newMat = new Matrix(this.dim, 1);
+    for (let i = 0; i < this.dim; i++) {
+      newMat.mat[i] = [this.comps[i]];
+    }
 
     return newMat;
   }
@@ -391,5 +393,19 @@ export class Vector {
     return Math.sqrt(
       this.comps.map((comp) => comp * comp).reduce((a, b) => a + b)
     );
+  }
+
+  get rowMatrix() {
+    const matrix = new Matrix(1, this.dim);
+    matrix.mat = [[...this.comps]];
+
+    return matrix;
+  }
+
+  get columnMatrix() {
+    const matrix = new Matrix(this.dim, 1);
+    this.comps.forEach((comp, i) => (matrix._mat[i] = [comp]));
+
+    return matrix;
   }
 }
