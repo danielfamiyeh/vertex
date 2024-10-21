@@ -1,56 +1,63 @@
 import { Vector } from '../../math/vector/Vector';
-import { CameraFrustrum } from './Camera.types';
+import { CameraFrustrum, CameraOptions } from './Camera.types';
 import { Color } from '../color/Color';
 import { Plane } from '../../math/plane/Plane';
 
 export class Camera {
   private _frustrum: CameraFrustrum;
+  private _position: Vector;
+  private _direction: Vector;
+  private _displacement: number;
 
-  constructor(
-    private _position: Vector,
-    private near: number,
-    private far: number,
-    private _direction = new Vector(0, 0, 1),
-    private _displacement = 0.2
-  ) {
+  constructor(options: CameraOptions) {
+    this._position = options.position;
+    this._direction = options.direction;
+    this._displacement = options.displacement;
+
     this._frustrum = {
-      near: new Plane(new Vector(0, 0, near), new Vector(0, 0, 1)),
-      far: new Plane(new Vector(0, 0, far), new Vector(0, 0, -1)),
+      near: new Plane(new Vector(0, 0, options.near), new Vector(0, 0, 1)),
+      far: new Plane(new Vector(0, 0, options.far), new Vector(0, 0, -1)),
+      left: new Plane(new Vector(0, 0, 0), new Vector(1, 0, 0)),
+      right: new Plane(new Vector(options.right, 0, 0), new Vector(-1, 0, 0)),
+      top: new Plane(new Vector(0, 0, 0), new Vector(0, -1, 0)),
+      bottom: new Plane(new Vector(0, options.bottom, 0), new Vector(0, 1, 0)),
     };
 
-    addEventListener('keydown', (event) => {
-      if (event.key === 'ArrowUp') {
-        this._position.y += _displacement;
-      }
+    addEventListener('keydown', this.defaultControlsListener.bind(this));
+  }
 
-      if (event.key === 'ArrowDown') {
-        this._position.y -= _displacement;
-      }
+  defaultControlsListener(event: KeyboardEvent) {
+    if (event.key === 'ArrowUp') {
+      this._position.y += this._displacement;
+    }
 
-      if (event.key === 'ArrowLeft') {
-        this._position.x -= _displacement;
-      }
+    if (event.key === 'ArrowDown') {
+      this._position.y -= this._displacement;
+    }
 
-      if (event.key === 'ArrowRight') {
-        this._position.x += _displacement;
-      }
+    if (event.key === 'ArrowLeft') {
+      this._position.x -= this._displacement;
+    }
 
-      if (event.key.toLowerCase() === 'a') {
-        this._direction.x -= _displacement / 2;
-      }
+    if (event.key === 'ArrowRight') {
+      this._position.x += this._displacement;
+    }
 
-      if (event.key.toLowerCase() === 'd') {
-        this._direction.x += _displacement / 2;
-      }
+    if (event.key.toLowerCase() === 'a') {
+      this._direction.x -= this._displacement / 2;
+    }
 
-      if (event.key.toLowerCase() === 'w') {
-        this._position.add(Vector.scale(this._direction, this._displacement));
-      }
+    if (event.key.toLowerCase() === 'd') {
+      this._direction.x += this._displacement / 2;
+    }
 
-      if (event.key.toLowerCase() === 's') {
-        this._position.sub(Vector.scale(this._direction, this._displacement));
-      }
-    });
+    if (event.key.toLowerCase() === 'w') {
+      this._position.add(Vector.scale(this._direction, this._displacement));
+    }
+
+    if (event.key.toLowerCase() === 's') {
+      this._position.sub(Vector.scale(this._direction, this._displacement));
+    }
   }
 
   shouldCull(p1: Vector, p2: Vector, p3: Vector, epsilon = 0.05) {

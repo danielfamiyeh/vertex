@@ -16,9 +16,9 @@ export type GraphicsEngineOptions = {
 };
 
 export type Raster = {
-  face: Vector[];
+  points: Vector[];
   zMidpoint: number;
-  pNormal: Vector;
+  worldNormal: Vector;
   color: string;
 }[];
 

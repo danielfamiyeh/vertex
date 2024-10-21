@@ -1,6 +1,6 @@
 import { GraphicsEngine } from './api/graphics/engine/GraphicsEngine';
 
-window.vertexGameEngine = { graphics: {} as GraphicsEngine };
+window.__VERTEX_GAME_ENGINE__ = { graphics: {} as GraphicsEngine };
 
 const graphicsEngine = new GraphicsEngine(undefined, {
   fps: 30,

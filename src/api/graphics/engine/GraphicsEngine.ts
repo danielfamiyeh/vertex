@@ -8,7 +8,8 @@ import {
   Raster,
 } from './GraphicsEngine.types';
 import { GRAPHICS_ENGINE_OPTIONS_DEFAULTS } from './GraphicsEngine.utils';
-
+import { Triangle } from '../triangle/Triangle';
+import { cameraBounds } from '../camera/Camera.utils';
 export class GraphicsEngine {
   // TODO: Underscore all private class members
   private ctx: CanvasRenderingContext2D | null;
@@ -30,7 +31,7 @@ export class GraphicsEngine {
     private canvas = document.getElementById('canvas') as HTMLCanvasElement,
     options?: GraphicsEngineOptions
   ) {
-    this.ctx = this.canvas.getContext('2d');
+    this.ctx = this.canvas.getContext('2d', { alpha: false });
 
     if (!this.ctx) throw new Error('Cannot access Canvas context');
 
@@ -39,8 +40,6 @@ export class GraphicsEngine {
       GRAPHICS_ENGINE_OPTIONS_DEFAULTS,
       options
     );
-
-    _options.camera.near *= -1;
 
     this.ctx.strokeStyle = 'white';
     this.ctx.fillStyle = 'white';
@@ -59,11 +58,15 @@ export class GraphicsEngine {
     this.projectionMatrix = projectionMatrix;
     this.zOffset = zOffset;
 
-    this.camera = new Camera(
-      _options.camera.position,
-      _options.camera.near,
-      _options.camera.far
-    );
+    this.camera = new Camera({
+      position: _options.camera.position,
+      direction: _options.camera.direction,
+      displacement: _options.camera.displacement,
+      near: _options.camera.near,
+      far: _options.camera.far,
+      bottom: canvas.height,
+      right: canvas.width,
+    });
 
     this.meshes = [];
 
@@ -73,14 +76,14 @@ export class GraphicsEngine {
     }
 
     this.queue = [];
-    window.vertexGameEngine.graphics = this;
+    window.__VERTEX_GAME_ENGINE__.graphics = this;
   }
 
   static geometry(args: GeometryPipelineArgs) {
     const { meshes, zShift, camera, projectionMatrix, zOffset } = args;
 
     const raster: Raster = [];
-    const toRaster: Vector[][] = [];
+    const toRaster: Triangle[] = [];
 
     camera.position.__proto__ = Vector.prototype;
     camera.direction.__proto__ = Vector.prototype;
@@ -149,14 +152,33 @@ export class GraphicsEngine {
             const finalP2 = Vector.div(projectedP2, projectedP2.z);
             const finalP3 = Vector.div(projectedP3, projectedP3.z);
 
-            raster.push({
-              face: [finalP1, finalP2, finalP3],
-              zMidpoint: (projectedP1.z + projectedP2.z + projectedP3.z) / 3,
-              pNormal,
-              color: '',
-            });
+            toRaster.push(
+              new Triangle(
+                [finalP1, finalP2, finalP3],
+                (projectedP1.z + projectedP2.z + projectedP3.z) / 3,
+                pNormal,
+                ''
+              )
+            );
           }
         );
+      });
+    });
+
+    toRaster.forEach((triangle) => {
+      cameraBounds.forEach((bound) => {
+        const clippedTriangles: Triangle[] = camera.frustrum[bound]
+          .clipTriangle(triangle.points)
+          .map(
+            (points) =>
+              new Triangle(
+                points,
+                triangle.zMidpoint,
+                triangle.worldNormal,
+                triangle.color
+              )
+          );
+        raster.push(...clippedTriangles);
       });
     });
 
@@ -167,7 +189,7 @@ export class GraphicsEngine {
     raster.sort((a, b) => b.zMidpoint - a.zMidpoint);
 
     raster.forEach((rasterObj) => {
-      const { color } = camera.illuminate(rasterObj.pNormal);
+      const { color } = camera.illuminate(rasterObj.worldNormal);
       rasterObj.color = `#${color.toHex()}`;
     });
 
@@ -180,10 +202,10 @@ export class GraphicsEngine {
     ctx?.translate(canvas.width / 2, canvas.height / 2);
     raster.forEach((raster) => {
       if (!ctx) return;
-      raster.face.forEach((v) => (v.__proto__ = Vector.prototype));
+      raster.points.forEach((v) => (v.__proto__ = Vector.prototype));
 
       const {
-        face: [p1, p2, p3],
+        points: [p1, p2, p3],
         color,
       } = raster;
       ctx.fillStyle = color;
@@ -255,7 +277,7 @@ export class GraphicsEngine {
   }
 
   private handleWorkerRender(event: MessageEvent) {
-    window.vertexGameEngine.graphics?.queue.push(event.data);
+    window.__VERTEX_GAME_ENGINE__.graphics?.queue.push(event.data);
   }
 
   render() {

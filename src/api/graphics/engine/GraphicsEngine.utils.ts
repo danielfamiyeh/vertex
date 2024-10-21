@@ -8,7 +8,7 @@ export const GRAPHICS_ENGINE_OPTIONS_DEFAULTS = {
     far: 1000,
     fieldOfView: 90,
     position: new Vector(0, 0, 0),
-    direction: new Vector(0, 0, -1),
+    direction: new Vector(0, 0, 1),
     displacement: 0.2,
   },
   useWorker: false,

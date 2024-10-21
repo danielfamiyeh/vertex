@@ -4,6 +4,10 @@ import { Vector } from '@vertex/api/math/vector/Vector';
 export type CameraFrustrum = {
   near: Plane;
   far: Plane;
+  left: Plane;
+  right: Plane;
+  top: Plane;
+  bottom: Plane;
 };
 
 export type CameraOptions = {
@@ -12,4 +16,6 @@ export type CameraOptions = {
   direction: Vector;
   near: number;
   far: number;
+  bottom: number;
+  right: number;
 };
