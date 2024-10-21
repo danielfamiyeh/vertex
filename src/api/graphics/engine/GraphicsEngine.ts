@@ -6,6 +6,7 @@ import { GraphicsEngineOptions } from './GraphicsEngine.types';
 import { GRAPHICS_ENGINE_OPTIONS_DEFAULTS } from './GraphicsEngine.utils';
 import { Triangle } from '../triangle/Triangle';
 import { cameraBounds } from '../camera/Camera.utils';
+import { Entity } from '@vertex/api/game/entity/Entity';
 
 let printed = false;
 export class GraphicsEngine {
@@ -16,13 +17,9 @@ export class GraphicsEngine {
   private zShift: Vector;
   private scale: number;
   private camera: Camera;
-  private meshes: Mesh[];
-  public queue: Triangle[];
-  private lastFrame = Date.now();
-  private fps: number;
+  private _meshes: Record<string, Mesh> = {};
 
   static angle = 180;
-  static dt = 4;
 
   constructor(
     private canvas = document.getElementById('canvas') as HTMLCanvasElement,
@@ -41,7 +38,6 @@ export class GraphicsEngine {
     this.ctx.strokeStyle = 'white';
     this.ctx.fillStyle = 'white';
 
-    this.fps = _options.fps;
     this.zShift = _options.zShift;
     this.scale = _options.scale;
 
@@ -65,32 +61,38 @@ export class GraphicsEngine {
       right: canvas.width,
     });
 
-    this.meshes = [];
-
-    this.queue = [];
-    window.__VERTEX_GAME_ENGINE__.graphics = this;
+    this._meshes = {};
   }
 
-  geometry() {
-    const { meshes, zShift, camera, projectionMatrix, zOffset } = this;
+  geometry(entities: Record<string, Entity>) {
+    const { zShift, camera, projectionMatrix, zOffset } = this;
+    const entityIds = Object.keys(entities);
 
     const raster: Triangle[] = [];
     const toRaster: Triangle[] = [];
 
     const { viewMatrix } = Matrix.viewMatrix(camera);
 
-    // GraphicsEngine.angle += GraphicsEngine.dt;
-
-    meshes.forEach((mesh) => {
+    entityIds.forEach((id) => {
+      const entity = entities[id];
+      const mesh = entity.mesh;
+      if (!mesh) return;
       mesh.triangles.forEach(([p1, p2, p3]) => {
         const worldMatrix = Matrix.worldMatrix(
-          new Vector(GraphicsEngine.angle, 0, GraphicsEngine.angle),
+          entity.rigidBody?.rotation ?? new Vector(0, 0, 0),
           zShift
         );
 
         const worldP1 = worldMatrix.mult(p1.matrix).vector;
         const worldP2 = worldMatrix.mult(p2.matrix).vector;
         const worldP3 = worldMatrix.mult(p3.matrix).vector;
+
+        [worldP1, worldP2, worldP3].forEach((worldPoint) => {
+          if (!entity.rigidBody?.position) return;
+          const { position } = entity.rigidBody;
+
+          worldPoint.add(new Vector(position.x, position.y, position.z, 0));
+        });
 
         const pNormal = Vector.sub(worldP2, worldP1)
           .cross(Vector.sub(worldP3, worldP1))
@@ -136,6 +138,7 @@ export class GraphicsEngine {
             const finalP1 = Vector.div(projectedP1, projectedP1.z).scale(
               this.scale
             );
+
             const finalP2 = Vector.div(projectedP2, projectedP2.z).scale(
               this.scale
             );
@@ -143,9 +146,11 @@ export class GraphicsEngine {
               this.scale
             );
 
+            const finalPoints = [finalP1, finalP2, finalP3];
+
             toRaster.push(
               new Triangle(
-                [finalP1, finalP2, finalP3],
+                finalPoints,
                 (projectedP1.z + projectedP2.z + projectedP3.z) / 3,
                 pNormal,
                 ''
@@ -220,7 +225,7 @@ export class GraphicsEngine {
     ctx?.translate(-canvas.width / 2, -canvas.height / 2);
   }
 
-  static async loadMesh(url: string) {
+  async loadMesh(url: string) {
     const res = await fetch(url);
     const file = await res.text();
 
@@ -264,27 +269,16 @@ export class GraphicsEngine {
       }
     });
 
-    return new Mesh(meshData.name, meshData.vertices, meshData.triangles);
+    const mesh = new Mesh(meshData.name, meshData.vertices, meshData.triangles);
+    this._meshes[url] = mesh;
+    return mesh;
   }
 
-  async loadMeshes(...urls: string[]) {
-    const meshes = urls.map((url) => GraphicsEngine.loadMesh(url));
-
-    return await Promise.all(meshes).then((meshes) => {
-      this.meshes.push(...meshes);
-    });
+  render(entities: Record<string, Entity>) {
+    this.screen(this.rasterize(this.geometry(entities)));
   }
 
-  render() {
-    const now = Date.now();
-    const interval = 1000 / this.fps;
-    const delta = now - this.lastFrame;
-
-    if (delta > interval) {
-      this.screen(this.rasterize(this.geometry()));
-      this.lastFrame = now - (delta % interval);
-    }
-
-    window.requestAnimationFrame(this.render.bind(this));
+  get meshes() {
+    return this._meshes;
   }
 }
