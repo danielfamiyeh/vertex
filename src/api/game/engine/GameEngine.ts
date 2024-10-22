@@ -3,6 +3,8 @@ import { GRAPHICS_ENGINE_OPTIONS_DEFAULTS } from '../../graphics/engine/Graphics
 import { PhysicsEngine } from '../../phyisics/engine/PhysicsEngine';
 import { GameEngineOptions } from './GameEngine.utils';
 import { Entity } from '../entity/Entity';
+import { RigidBody } from '../../../api/phyisics/rigid-body/RigidBody';
+import { RigidBodyOptions } from '@vertex/api/phyisics/rigid-body/RigidBody.utils';
 
 export class GameEngine {
   private _graphics: GraphicsEngine;
@@ -20,6 +22,7 @@ export class GameEngine {
     this._physics = new PhysicsEngine();
     this._fps = graphics.fps ?? 30;
 
+    // @ts-ignore
     window.__VERTEX_GAME_ENGINE__ = this;
   }
 
@@ -40,7 +43,48 @@ export class GameEngine {
     window.requestAnimationFrame(() => this.start());
   }
 
-  async loadEntityMesh(id: string, url: string) {
+  async createEntity(
+    id: string,
+    options: {
+      graphics?: {
+        mesh: string;
+        scale?: number;
+      };
+      physics?: RigidBodyOptions;
+    } = {}
+  ) {
+    if (this._entities[id]) {
+      throw new Error(`Entity '${id}' already exists`);
+    }
+
+    const { graphics, physics } = options;
+
+    const entity = new Entity(id);
+
+    entity.scale = graphics?.scale ?? 1;
+
+    this._entities[id] = entity;
+
+    if (physics) {
+      if (physics) {
+        entity.body = new RigidBody(physics);
+      }
+    }
+
+    if (graphics) {
+      if (graphics.mesh) {
+        const mesh = await this.loadEntityMesh(
+          id,
+          graphics.mesh,
+          graphics.scale ?? 1
+        );
+      }
+    }
+
+    return entity;
+  }
+
+  async loadEntityMesh(id: string, url: string, scale: number) {
     const mesh =
       this.graphics.meshes[url] ?? (await this.graphics.loadMesh(url));
 

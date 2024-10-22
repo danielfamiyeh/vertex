@@ -13,7 +13,7 @@ export class PhysicsEngine {
 
     if (delta > interval) {
       Object.keys(entities).forEach((id) => {
-        entities[id].rigidBody?.update(delta);
+        entities[id].body?.update(delta, entities);
       });
       this._lastUpdate = now - (delta % interval);
     }

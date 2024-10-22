@@ -286,9 +286,8 @@ export class Vector {
    * @returns {Vector} Scaled vector
    */
   scale(lambda: number): Vector {
-    return new Vector(
-      ...this.comps.map((comp) => (!comp ? comp : comp * lambda))
-    );
+    this.comps = this.comps.map((comp) => (!comp ? comp : comp * lambda));
+    return this;
   }
 
   /**

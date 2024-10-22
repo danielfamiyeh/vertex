@@ -13,7 +13,7 @@ export class GraphicsEngine {
   // TODO: Underscore all private class members
   private ctx: CanvasRenderingContext2D | null;
   private projectionMatrix: Matrix;
-  private zOffset: number;
+  private zOffset: Vector;
   private zShift: Vector;
   private scale: number;
   private camera: Camera;
@@ -49,7 +49,7 @@ export class GraphicsEngine {
     );
 
     this.projectionMatrix = projectionMatrix;
-    this.zOffset = zOffset;
+    this.zOffset = new Vector(0, 0, zOffset);
 
     this.camera = new Camera({
       position: _options.camera.position,
@@ -76,32 +76,33 @@ export class GraphicsEngine {
     entityIds.forEach((id) => {
       const entity = entities[id];
       const mesh = entity.mesh;
+      const worldMatrix = Matrix.worldMatrix(
+        entity.body?.rotation ?? new Vector(0, 0, 0),
+        zShift
+      );
+
       if (!mesh) return;
-      mesh.triangles.forEach(([p1, p2, p3]) => {
-        const worldMatrix = Matrix.worldMatrix(
-          entity.rigidBody?.rotation ?? new Vector(0, 0, 0),
-          zShift
+
+      mesh.triangles.forEach((modelPoints) => {
+        const worldPoints = modelPoints.map(
+          (point) => worldMatrix.mult(point.matrix).vector
         );
 
-        const worldP1 = worldMatrix.mult(p1.matrix).vector;
-        const worldP2 = worldMatrix.mult(p2.matrix).vector;
-        const worldP3 = worldMatrix.mult(p3.matrix).vector;
-
-        [worldP1, worldP2, worldP3].forEach((worldPoint) => {
-          if (!entity.rigidBody?.position) return;
-          const { position } = entity.rigidBody;
+        worldPoints.forEach((worldPoint) => {
+          if (!entity.body?.position) return;
+          const { position } = entity.body;
 
           worldPoint.add(new Vector(position.x, position.y, position.z, 0));
         });
 
-        const pNormal = Vector.sub(worldP2, worldP1)
-          .cross(Vector.sub(worldP3, worldP1))
+        const pNormal = Vector.sub(worldPoints[1], worldPoints[0])
+          .cross(Vector.sub(worldPoints[2], worldPoints[0]))
           .normalize()
           .extend(0);
 
         const raySimilarity = Vector.sub(
           Vector.extended(camera.position, 1),
-          worldP1
+          worldPoints[0]
         )
           .normalize()
           .dot(pNormal);
@@ -109,60 +110,38 @@ export class GraphicsEngine {
         // TODO: Use Camera.shouldCull
         if (raySimilarity < 0) return;
 
-        const viewP1 = worldP1.rowMatrix.mult(viewMatrix).vector.columnMatrix;
-        const viewP2 = worldP2.rowMatrix.mult(viewMatrix).vector.columnMatrix;
-        const viewP3 = worldP3.rowMatrix.mult(viewMatrix).vector.columnMatrix;
-
-        const clippedTriangles = camera.frustrum.near.clipTriangle([
-          viewP1.vector,
-          viewP2.vector,
-          viewP3.vector,
-        ]);
-
-        clippedTriangles.forEach(
-          ([clippedP1, clippedP2, clippedP3]: Vector[]) => {
-            const projectedP1 = projectionMatrix.mult(
-              clippedP1.columnMatrix
-            ).vector;
-            const projectedP2 = projectionMatrix.mult(
-              clippedP2.columnMatrix
-            ).vector;
-            const projectedP3 = projectionMatrix.mult(
-              clippedP3.columnMatrix
-            ).vector;
-
-            projectedP1.comps[2] -= zOffset;
-            projectedP2.comps[2] -= zOffset;
-            projectedP3.comps[2] -= zOffset;
-
-            const finalP1 = Vector.div(projectedP1, projectedP1.z).scale(
-              this.scale
-            );
-
-            const finalP2 = Vector.div(projectedP2, projectedP2.z).scale(
-              this.scale
-            );
-            const finalP3 = Vector.div(projectedP3, projectedP3.z).scale(
-              this.scale
-            );
-
-            const finalPoints = [finalP1, finalP2, finalP3];
-
-            toRaster.push(
-              new Triangle(
-                finalPoints,
-                (projectedP1.z + projectedP2.z + projectedP3.z) / 3,
-                pNormal,
-                ''
-              )
-            );
-          }
+        const viewPoints = worldPoints.map(
+          (point) => point.rowMatrix.mult(viewMatrix).vector
         );
+
+        // I'm guessing a depth buffer would help with this?
+        const clippedTriangles = camera.frustrum.near.clipTriangle(viewPoints);
+
+        clippedTriangles.forEach((points: Vector[]) => {
+          const projectedPoints = points.map((point) =>
+            projectionMatrix.mult(point.columnMatrix).vector.sub(zOffset)
+          );
+
+          const finalPoints = projectedPoints.map((point) =>
+            Vector.div(point, point.z).scale(this.scale)
+          );
+
+          toRaster.push(
+            new Triangle(
+              finalPoints,
+              (projectedPoints[0].z +
+                projectedPoints[1].z +
+                projectedPoints[2].z) /
+                3,
+              pNormal,
+              ''
+            )
+          );
+        });
       });
     });
 
-    toRaster.sort((a, b) => b.zMidpoint - a.zMidpoint);
-
+    // Clipping routine
     toRaster.forEach((triangle) => {
       const queue: Triangle[] = [];
       queue.push(triangle);
@@ -193,6 +172,8 @@ export class GraphicsEngine {
   }
 
   rasterize(raster: Triangle[]) {
+    raster.sort((a, b) => b.zMidpoint - a.zMidpoint);
+
     raster.forEach((rasterObj) => {
       const { color } = this.camera.illuminate(rasterObj.worldNormal);
       rasterObj.color = `#${color.toHex()}`;
@@ -202,7 +183,7 @@ export class GraphicsEngine {
   }
 
   screen(raster: Triangle[]) {
-    const { ctx, canvas, scale } = this;
+    const { ctx, canvas } = this;
     ctx?.clearRect(0, 0, canvas.width, canvas.height);
     ctx?.translate(canvas.width / 2, canvas.height / 2);
     raster.forEach((raster) => {
@@ -212,14 +193,14 @@ export class GraphicsEngine {
         points: [p1, p2, p3],
         color,
       } = raster;
-      ctx.fillStyle = color;
+      ctx.strokeStyle = color;
 
       ctx?.beginPath();
       ctx?.moveTo(p1.x, -p1.y);
       ctx?.lineTo(p2.x, -p2.y);
       ctx?.lineTo(p3.x, -p3.y);
       ctx?.lineTo(p1.x, -p1.y);
-      ctx?.fill();
+      ctx?.stroke();
     });
 
     ctx?.translate(-canvas.width / 2, -canvas.height / 2);
