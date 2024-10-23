@@ -6,6 +6,7 @@ import { Entity } from '../entity/Entity';
 import { RigidBody } from '../../physics/rigid-body/RigidBody';
 import { RigidBodyOptions } from '@vertex/api/physics/rigid-body/RigidBody.utils';
 import { Vector } from '../../math/vector/Vector';
+import { Sphere } from '../..//math/sphere/Sphere';
 
 export class GameEngine {
   private _graphics: GraphicsEngine;
@@ -59,18 +60,13 @@ export class GameEngine {
     }
 
     const { graphics, physics } = options;
-
     const entity = new Entity(id);
 
     entity.scale = graphics?.scale ?? new Vector(1, 1, 1);
 
     this._entities[id] = entity;
 
-    if (physics) {
-      if (physics) {
-        entity.body = new RigidBody(physics);
-      }
-    }
+    if (physics) entity.body = new RigidBody(physics);
 
     if (graphics?.mesh)
       await this.loadEntityMesh(id, graphics.mesh, entity.scale);
@@ -78,14 +74,23 @@ export class GameEngine {
     return entity;
   }
 
-  async loadEntityMesh(id: string, url: string, scale = new Vector(1, 1, 1)) {
-    const mesh =
-      this.graphics.meshes[url] ??
-      (await this.graphics.loadMesh(id, url, scale));
+  async loadEntityMesh(id: string, url: string, scale: Vector) {
+    // TODO: Caching
+    const { mesh, boundingSphere } = await this.graphics.loadMesh(
+      id,
+      url,
+      scale
+    );
 
     if (!this.entities[id]) this.entities[id] = new Entity(id);
 
     this.entities[id].mesh = mesh;
+    if (this.entities[id].body !== undefined) {
+      this.entities[id].body.boundingSphere = new Sphere(
+        this.entities[id].body?.position,
+        boundingSphere.radius
+      );
+    }
 
     return this.entities[id];
   }

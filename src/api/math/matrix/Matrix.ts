@@ -49,14 +49,13 @@ export class Matrix {
     return { cameraMatrix, viewMatrix };
   }
 
-  static worldMatrix(rotation: Vector, translation: Vector) {
+  static worldMatrix(rotation: Vector) {
     // TODO: Quaternions?
     const xRotation = Matrix.xRotation(rotation.x);
     const yRotation = Matrix.yRotation(rotation.y);
     const zRotation = Matrix.zRotation(rotation.z);
-    const _translation = Matrix.translation(translation);
 
-    return _translation.mult(xRotation.mult(yRotation.mult(zRotation)));
+    return xRotation.mult(yRotation.mult(zRotation));
   }
 
   static projectionMatrix(

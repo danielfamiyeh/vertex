@@ -7,13 +7,14 @@ import { GRAPHICS_ENGINE_OPTIONS_DEFAULTS } from './GraphicsEngine.utils';
 import { Triangle } from '../triangle/Triangle';
 import { cameraBounds } from '../camera/Camera.utils';
 import { Entity } from '@vertex/api/game/entity/Entity';
+import { Box } from '../../math/box/Box';
+import { Sphere } from '../../math/sphere/Sphere';
 
 export class GraphicsEngine {
   // TODO: Underscore all private class members
   private ctx: CanvasRenderingContext2D | null;
   private projectionMatrix: Matrix;
   private zOffset: Vector;
-  private zShift: Vector;
   private camera: Camera;
   private _meshes: Record<string, Mesh> = {};
 
@@ -35,8 +36,6 @@ export class GraphicsEngine {
 
     this.ctx.strokeStyle = 'white';
     this.ctx.fillStyle = 'white';
-
-    this.zShift = _options.zShift;
 
     const { projectionMatrix, zOffset } = Matrix.projectionMatrix(
       canvas,
@@ -63,7 +62,7 @@ export class GraphicsEngine {
   // TODO: normalize model coordinates [-1,1] so that radius is 1
 
   geometry(entities: Record<string, Entity>) {
-    const { zShift, camera, projectionMatrix, zOffset } = this;
+    const { camera, projectionMatrix, zOffset } = this;
     const entityIds = Object.keys(entities);
 
     const raster: Triangle[] = [];
@@ -75,8 +74,7 @@ export class GraphicsEngine {
       const entity = entities[id];
       const mesh = entity.mesh;
       const worldMatrix = Matrix.worldMatrix(
-        entity.body?.rotation ?? new Vector(0, 0, 0),
-        zShift
+        entity.body?.rotation ?? new Vector(0, 0, 0)
       );
 
       if (!mesh) return;
@@ -210,6 +208,9 @@ export class GraphicsEngine {
     const res = await fetch(url);
     const file = await res.text();
 
+    const min = new Vector(0, 0, 0);
+    const max = new Vector(0, 0, 0);
+
     const meshData = {
       name: '',
       vertices: [] as Vector[],
@@ -217,19 +218,24 @@ export class GraphicsEngine {
     };
 
     file.split('\n').forEach((line, i) => {
-      if (line.startsWith('o')) {
-        meshData.name = line.slice(2);
-      } else if (line.startsWith('v')) {
+      const [type, ...parts] = line.replace(/\r/g, '').split(' ');
+
+      if (type === 'o') {
+        meshData.name = parts[0];
+      } else if (type === 'v') {
         meshData.vertices.push(
           new Vector(
-            ...line
-              .slice(2)
-              .split(' ')
-              .map((v, i) => parseFloat(v) * scale.comps[i]),
+            ...parts.map((v, j) => {
+              const _v = parseFloat(v) * scale.comps[j];
+              if (_v < min.comps[j]) min.comps[j] = _v;
+              if (_v > max.comps[j]) max.comps[j] = _v;
+
+              return _v;
+            }),
             1
           )
         );
-      } else if (line.startsWith('f')) {
+      } else if (type === 'f') {
         let [p1, p2, p3] = line.slice(2).split(' ');
         if (!p1 || !p2 || !p3) {
           throw new Error(
@@ -251,8 +257,15 @@ export class GraphicsEngine {
     });
 
     const mesh = new Mesh(meshData.name, meshData.vertices, meshData.triangles);
+    // const boundingBox = new Box(min, max);
+    const boundingSphere = new Sphere(
+      Vector.add(min, max).scale(1 / 2),
+      Vector.sub(max, min).mag / 2
+    );
+
     this._meshes[id] = mesh;
-    return mesh;
+
+    return { mesh, boundingSphere };
   }
 
   render(entities: Record<string, Entity>) {

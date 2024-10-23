@@ -9,6 +9,10 @@ export class Vector {
     this.comps = args.map((num) => num);
   }
 
+  toString() {
+    return `v(${this.comps.toString()})`;
+  }
+
   static uniform(num: number, dim: number) {
     return new Vector(...new Array(dim).fill(num));
   }

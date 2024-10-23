@@ -7,4 +7,5 @@ export type RigidBodyOptions = {
   mass?: number;
   forces?: Record<string, Vector>;
   transforms?: Record<string, RigidBodyTransform>;
+  sphereRadius?: number;
 };

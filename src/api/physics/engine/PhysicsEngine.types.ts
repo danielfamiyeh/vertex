@@ -1,1 +1,3 @@
-export type PhysicsEngineOptions = {};
+export type PhysicsEngineOptions = {
+  sphereRadius?: number;
+};

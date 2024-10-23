@@ -2,6 +2,7 @@ import { Entity } from '@vertex/api/game/entity/Entity';
 
 export class PhysicsEngine {
   private _lastUpdate: number = 0;
+
   constructor() {}
 
   update(entities: Record<string, Entity>) {

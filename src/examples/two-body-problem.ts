@@ -1,6 +1,7 @@
 import { Entity } from '@vertex/api/game/entity/Entity';
 import { GameEngine } from '../api/game/engine/GameEngine';
 import { Vector } from '../api/math/vector/Vector';
+import { SphereCollider } from '../api/physics/collider/SphereCollider';
 
 const fGravity = (entityA: Entity, entityB: Entity) => {
   if (!entityA.body || !entityB.body) return new Vector(0, 0, 0);
@@ -20,7 +21,6 @@ export const initTwoBodyProblemExample = async (gameEngine: GameEngine) => {
   const earth = await gameEngine.createEntity('earth', {
     graphics: {
       mesh: 'http://127.0.0.1:8080/sphere.obj',
-      scale: Vector.uniform(1, 4),
     },
     physics: {
       position: new Vector(7.5, 5, -5),
@@ -74,4 +74,6 @@ export const initTwoBodyProblemExample = async (gameEngine: GameEngine) => {
       },
     },
   });
+
+  earth.colliders.withEarth = new SphereCollider(earth.body);
 };
