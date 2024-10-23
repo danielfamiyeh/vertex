@@ -1,12 +1,24 @@
 import { Collider } from './Collider';
 import { RigidBody } from '../rigid-body/RigidBody';
-import { Vector } from '../../math/vector/Vector';
+
 export class SphereCollider implements Collider {
   isActive = false;
 
-  constructor(private _body: RigidBody) {}
+  constructor(
+    private _body: RigidBody,
+    private _otherBody: RigidBody,
+    public callback: Function
+  ) {}
 
-  isColliding(bodyB: RigidBody): boolean {
-    return this._body.boundingSphere.isIntersectingSphere(bodyB.boundingSphere);
+  handleCollision() {
+    if (
+      this._body.boundingSphere.isIntersectingSphere(
+        this._otherBody.boundingSphere
+      )
+    ) {
+      this.callback();
+      return true;
+    }
+    return false;
   }
 }

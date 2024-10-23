@@ -1,26 +1,20 @@
 import { Entity } from '@vertex/api/game/entity/Entity';
 
 export class PhysicsEngine {
-  private _lastUpdate: number = 0;
-
   constructor() {}
 
-  update(entities: Record<string, Entity>) {
-    const { lastUpdate } = this;
+  update(delta: number, entities: Record<string, Entity>) {
+    Object.keys(entities).forEach((id) => {
+      const entity = entities[id];
+      const colliders = Object.keys(entity.colliders)
+        .filter((id) => entity.colliders[id].isActive)
+        .map((id) => entity.colliders[id]);
 
-    const now = Date.now();
-    const delta = now - lastUpdate;
-    const interval = 1000 / 60;
+      entity.body?.update(delta, entities);
 
-    if (delta > interval) {
-      Object.keys(entities).forEach((id) => {
-        entities[id].body?.update(delta, entities);
+      colliders.forEach((collider) => {
+        collider.handleCollision();
       });
-      this._lastUpdate = now - (delta % interval);
-    }
-  }
-
-  get lastUpdate() {
-    return this._lastUpdate;
+    });
   }
 }

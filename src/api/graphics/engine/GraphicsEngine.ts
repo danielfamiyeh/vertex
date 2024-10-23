@@ -208,8 +208,8 @@ export class GraphicsEngine {
     const res = await fetch(url);
     const file = await res.text();
 
-    const min = new Vector(0, 0, 0);
-    const max = new Vector(0, 0, 0);
+    const min = new Vector(Infinity, Infinity, Infinity);
+    const max = new Vector(-Infinity, -Infinity, -Infinity);
 
     const meshData = {
       name: '',
