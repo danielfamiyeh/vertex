@@ -27,7 +27,7 @@ export const initTwoBodyProblemExample = async (gameEngine: GameEngine) => {
       rotation: new Vector(30, 0, 0),
       mass: 10,
       forces: {
-        velocity: new Vector(0, 0, 0.05),
+        velocity: new Vector(0, 0, 0.1),
         rotation: new Vector(0, 1, 0),
       },
       transforms: {
@@ -49,12 +49,12 @@ export const initTwoBodyProblemExample = async (gameEngine: GameEngine) => {
   const moon = await gameEngine.createEntity('moon', {
     graphics: {
       mesh: 'http://127.0.0.1:8080/sphere.obj',
-      scale: Vector.uniform(0.25, 4),
+      scale: Vector.uniform(0.25, 3),
     },
     physics: {
       position: new Vector(-5, 0, 0),
       rotation: new Vector(0, 2, 0),
-      mass: 0.5,
+      mass: 1,
       forces: {
         velocity: new Vector(0, 0, 0),
         rotation: new Vector(0, 4, 0),

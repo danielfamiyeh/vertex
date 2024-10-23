@@ -85,11 +85,9 @@ export class GameEngine {
     if (!this.entities[id]) this.entities[id] = new Entity(id);
 
     this.entities[id].mesh = mesh;
-
-    this.entities[id].body.boundingSphere = new Sphere(
-      this.entities[id].body?.position,
-      boundingSphere.radius
-    );
+    if (this.entities[id].body !== undefined) {
+      this.entities[id].body.boundingSphere = boundingSphere;
+    }
 
     return this.entities[id];
   }
