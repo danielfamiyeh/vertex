@@ -23,7 +23,7 @@ export const initTwoBodyProblemExample = async (gameEngine: GameEngine) => {
       mesh: 'http://127.0.0.1:8080/sphere.obj',
     },
     physics: {
-      position: new Vector(7.5, 5, -5),
+      position: new Vector(8, 5, -5),
       rotation: new Vector(30, 0, 0),
       mass: 10,
       forces: {
@@ -36,7 +36,7 @@ export const initTwoBodyProblemExample = async (gameEngine: GameEngine) => {
         },
         applyGravity(_, self, entities) {
           self.forces.velocity.add(
-            fGravity(entities.mars, entities.earth).scale(-1 / self.mass)
+            fGravity(entities.moon, entities.earth).scale(-1 / self.mass)
           );
         },
         move(_, self) {
@@ -46,15 +46,15 @@ export const initTwoBodyProblemExample = async (gameEngine: GameEngine) => {
     },
   });
 
-  const mars = await gameEngine.createEntity('mars', {
+  const moon = await gameEngine.createEntity('moon', {
     graphics: {
       mesh: 'http://127.0.0.1:8080/sphere.obj',
-      scale: Vector.uniform(0.25, 4),
+      scale: Vector.uniform(0.25, 3),
     },
     physics: {
       position: new Vector(-5, 0, 0),
       rotation: new Vector(0, 2, 0),
-      mass: 0.5,
+      mass: 1,
       forces: {
         velocity: new Vector(0, 0, 0),
         rotation: new Vector(0, 4, 0),
@@ -65,7 +65,7 @@ export const initTwoBodyProblemExample = async (gameEngine: GameEngine) => {
         },
         applyGravity(_, self, entities) {
           self.forces.velocity.add(
-            fGravity(entities.mars, entities.earth).scale(1 / self.mass)
+            fGravity(entities.moon, entities.earth).scale(1 / self.mass)
           );
         },
         move(_, self) {
@@ -75,5 +75,11 @@ export const initTwoBodyProblemExample = async (gameEngine: GameEngine) => {
     },
   });
 
-  earth.colliders.withEarth = new SphereCollider(earth.body);
+  earth.colliders.withMoon = new SphereCollider(earth.body, moon.body, () => {
+    console.log('intersects');
+
+    moon.body?.forces.velocity.scale(-1);
+    earth.body?.forces.velocity.scale(-1);
+  });
+  earth.colliders.withMoon.isActive = true;
 };

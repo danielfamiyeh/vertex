@@ -10,7 +10,7 @@ export class BoxCollider implements Collider {
     private _max: Vector
   ) {}
 
-  isColliding(bodyB: RigidBody) {
+  handleCollision(bodyB: RigidBody) {
     return false;
   }
 

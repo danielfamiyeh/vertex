@@ -34,7 +34,7 @@ export class GameEngine {
     const delta = now - this.lastFrame;
 
     if (delta > interval / 2) {
-      this.physics.update(this._entities);
+      this.physics.update(delta, this._entities);
     }
 
     if (delta > interval) {
@@ -86,10 +86,7 @@ export class GameEngine {
 
     this.entities[id].mesh = mesh;
     if (this.entities[id].body !== undefined) {
-      this.entities[id].body.boundingSphere = new Sphere(
-        this.entities[id].body?.position,
-        boundingSphere.radius
-      );
+      this.entities[id].body.boundingSphere = boundingSphere;
     }
 
     return this.entities[id];
