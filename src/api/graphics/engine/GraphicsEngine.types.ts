@@ -1,7 +1,6 @@
 import { Vector } from '../../math/vector/Vector';
 
 export type GraphicsEngineOptions = {
-  scale?: number;
   zShift?: Vector;
   camera?: {
     near: number;

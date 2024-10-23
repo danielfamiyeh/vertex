@@ -20,6 +20,7 @@ export const initTwoBodyProblemExample = async (gameEngine: GameEngine) => {
   const earth = await gameEngine.createEntity('earth', {
     graphics: {
       mesh: 'http://127.0.0.1:8080/sphere.obj',
+      scale: Vector.uniform(1, 4),
     },
     physics: {
       position: new Vector(7.5, 5, -5),
@@ -48,12 +49,12 @@ export const initTwoBodyProblemExample = async (gameEngine: GameEngine) => {
   const mars = await gameEngine.createEntity('mars', {
     graphics: {
       mesh: 'http://127.0.0.1:8080/sphere.obj',
-      scale: 0.3,
+      scale: Vector.uniform(0.25, 4),
     },
     physics: {
       position: new Vector(-5, 0, 0),
       rotation: new Vector(0, 2, 0),
-      mass: 1,
+      mass: 0.5,
       forces: {
         velocity: new Vector(0, 0, 0),
         rotation: new Vector(0, 4, 0),

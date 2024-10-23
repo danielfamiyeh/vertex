@@ -8,14 +8,12 @@ import { Triangle } from '../triangle/Triangle';
 import { cameraBounds } from '../camera/Camera.utils';
 import { Entity } from '@vertex/api/game/entity/Entity';
 
-let printed = false;
 export class GraphicsEngine {
   // TODO: Underscore all private class members
   private ctx: CanvasRenderingContext2D | null;
   private projectionMatrix: Matrix;
   private zOffset: Vector;
   private zShift: Vector;
-  private scale: number;
   private camera: Camera;
   private _meshes: Record<string, Mesh> = {};
 
@@ -39,7 +37,6 @@ export class GraphicsEngine {
     this.ctx.fillStyle = 'white';
 
     this.zShift = _options.zShift;
-    this.scale = _options.scale;
 
     const { projectionMatrix, zOffset } = Matrix.projectionMatrix(
       canvas,
@@ -63,6 +60,7 @@ export class GraphicsEngine {
 
     this._meshes = {};
   }
+  // TODO: normalize model coordinates [-1,1] so that radius is 1
 
   geometry(entities: Record<string, Entity>) {
     const { zShift, camera, projectionMatrix, zOffset } = this;
@@ -123,7 +121,9 @@ export class GraphicsEngine {
           );
 
           const finalPoints = projectedPoints.map((point) =>
-            Vector.div(point, point.z).scale(this.scale)
+            Vector.div(point, point.z).scale(
+              (this.canvas.height / this.canvas.width) * 200
+            )
           );
 
           toRaster.push(
@@ -206,7 +206,7 @@ export class GraphicsEngine {
     ctx?.translate(-canvas.width / 2, -canvas.height / 2);
   }
 
-  async loadMesh(url: string) {
+  async loadMesh(id: string, url: string, scale: Vector) {
     const res = await fetch(url);
     const file = await res.text();
 
@@ -225,7 +225,7 @@ export class GraphicsEngine {
             ...line
               .slice(2)
               .split(' ')
-              .map((v) => parseFloat(v)),
+              .map((v, i) => parseFloat(v) * scale.comps[i]),
             1
           )
         );
@@ -251,7 +251,7 @@ export class GraphicsEngine {
     });
 
     const mesh = new Mesh(meshData.name, meshData.vertices, meshData.triangles);
-    this._meshes[url] = mesh;
+    this._meshes[id] = mesh;
     return mesh;
   }
 

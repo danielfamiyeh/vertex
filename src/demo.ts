@@ -5,11 +5,11 @@ import { examples } from './examples';
 const gameEngine = new GameEngine({
   graphics: {
     fps: 30,
-    zShift: new Vector(0, 0, 0),
+    zShift: new Vector(0,0,25,0)
     camera: {
       near: 0.1,
       far: 1000,
-      fieldOfView: 90,
+      fieldOfView: 45,
       position: new Vector(0, 10, 0),
       direction: new Vector(0, 0, 1),
       displacement: 2,
