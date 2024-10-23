@@ -49,14 +49,13 @@ export class Matrix {
     return { cameraMatrix, viewMatrix };
   }
 
-  static worldMatrix(rotation: Vector, translation: Vector) {
-    const xRotation = Matrix.xRotation(rotation.x);
+  static worldMatrix(rotation: Vector) {
     // TODO: Quaternions?
+    const xRotation = Matrix.xRotation(rotation.x);
     const yRotation = Matrix.yRotation(rotation.y);
     const zRotation = Matrix.zRotation(rotation.z);
-    const _translation = Matrix.translation(translation);
 
-    return _translation.mult(xRotation.mult(yRotation.mult(zRotation)));
+    return xRotation.mult(yRotation.mult(zRotation));
   }
 
   static projectionMatrix(
@@ -149,6 +148,20 @@ export class Matrix {
     matrix._mat[2][3] = distance.z;
 
     return matrix;
+  }
+
+  static scaling(scaleVector: Vector) {
+    const matrix = Matrix.identity(4);
+
+    matrix.mat[0][0] *= scaleVector.x;
+    matrix.mat[1][1] *= scaleVector.y;
+    matrix.mat[2][2] *= scaleVector.z;
+    return matrix;
+  }
+
+  static uniformScaling(scalar: number) {
+    const scaleVector = new Vector(scalar, scalar, scalar);
+    return Matrix.scaling(scaleVector);
   }
 
   mult(matrix: Matrix) {

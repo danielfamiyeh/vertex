@@ -9,6 +9,14 @@ export class Vector {
     this.comps = args.map((num) => num);
   }
 
+  toString() {
+    return `v(${this.comps.toString()})`;
+  }
+
+  static uniform(num: number, dim: number) {
+    return new Vector(...new Array(dim).fill(num));
+  }
+
   static rotX(point: Vector, angle: number) {
     let rad = (angle * Math.PI) / 180,
       c = Math.cos(rad),
@@ -286,9 +294,8 @@ export class Vector {
    * @returns {Vector} Scaled vector
    */
   scale(lambda: number): Vector {
-    return new Vector(
-      ...this.comps.map((comp) => (!comp ? comp : comp * lambda))
-    );
+    this.comps = this.comps.map((comp) => (!comp ? comp : comp * lambda));
+    return this;
   }
 
   /**

@@ -1,8 +1,12 @@
 import { GraphicsEngine } from '../../graphics/engine/GraphicsEngine';
 import { GRAPHICS_ENGINE_OPTIONS_DEFAULTS } from '../../graphics/engine/GraphicsEngine.utils';
-import { PhysicsEngine } from '../../phyisics/engine/PhysicsEngine';
+import { PhysicsEngine } from '../../physics/engine/PhysicsEngine';
 import { GameEngineOptions } from './GameEngine.utils';
 import { Entity } from '../entity/Entity';
+import { RigidBody } from '../../physics/rigid-body/RigidBody';
+import { RigidBodyOptions } from '@vertex/api/physics/rigid-body/RigidBody.utils';
+import { Vector } from '../../math/vector/Vector';
+import { Sphere } from '../..//math/sphere/Sphere';
 
 export class GameEngine {
   private _graphics: GraphicsEngine;
@@ -20,6 +24,7 @@ export class GameEngine {
     this._physics = new PhysicsEngine();
     this._fps = graphics.fps ?? 30;
 
+    // @ts-ignore
     window.__VERTEX_GAME_ENGINE__ = this;
   }
 
@@ -40,13 +45,52 @@ export class GameEngine {
     window.requestAnimationFrame(() => this.start());
   }
 
-  async loadEntityMesh(id: string, url: string) {
-    const mesh =
-      this.graphics.meshes[url] ?? (await this.graphics.loadMesh(url));
+  async createEntity(
+    id: string,
+    options: {
+      graphics?: {
+        mesh: string;
+        scale?: Vector;
+      };
+      physics?: RigidBodyOptions;
+    } = {}
+  ) {
+    if (this._entities[id]) {
+      throw new Error(`Entity '${id}' already exists`);
+    }
+
+    const { graphics, physics } = options;
+    const entity = new Entity(id);
+
+    entity.scale = graphics?.scale ?? new Vector(1, 1, 1);
+
+    this._entities[id] = entity;
+
+    if (physics) entity.body = new RigidBody(physics);
+
+    if (graphics?.mesh)
+      await this.loadEntityMesh(id, graphics.mesh, entity.scale);
+
+    return entity;
+  }
+
+  async loadEntityMesh(id: string, url: string, scale: Vector) {
+    // TODO: Caching
+    const { mesh, boundingSphere } = await this.graphics.loadMesh(
+      id,
+      url,
+      scale
+    );
 
     if (!this.entities[id]) this.entities[id] = new Entity(id);
 
     this.entities[id].mesh = mesh;
+    if (this.entities[id].body !== undefined) {
+      this.entities[id].body.boundingSphere = new Sphere(
+        this.entities[id].body?.position,
+        boundingSphere.radius
+      );
+    }
 
     return this.entities[id];
   }

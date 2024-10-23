@@ -2,6 +2,7 @@ import { Entity } from '@vertex/api/game/entity/Entity';
 
 export class PhysicsEngine {
   private _lastUpdate: number = 0;
+
   constructor() {}
 
   update(entities: Record<string, Entity>) {
@@ -13,7 +14,7 @@ export class PhysicsEngine {
 
     if (delta > interval) {
       Object.keys(entities).forEach((id) => {
-        entities[id].rigidBody?.update(delta);
+        entities[id].body?.update(delta, entities);
       });
       this._lastUpdate = now - (delta % interval);
     }

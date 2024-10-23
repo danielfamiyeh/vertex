@@ -1,13 +1,14 @@
 import { Vector } from '../../math/vector/Vector';
 
 export type GraphicsEngineOptions = {
-  scale?: number;
-  zShift?: Vector;
+  style?: 'fill' | 'stroke';
   camera?: {
     near: number;
     far: number;
     fieldOfView: number;
     position: Vector;
+    displacement: number;
+    direction: Vector;
   };
   fps?: number;
 };
