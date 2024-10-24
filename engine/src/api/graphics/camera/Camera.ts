@@ -54,7 +54,7 @@ export class Camera {
       .__CAMERA__;
 
     if (key === 'w' || key === 's') {
-      cameraEntity.body?.forces.velocity.z = 0;
+      cameraEntity.body?.forces.velocity = new Vector(0, 0, 0);
     }
 
     if (key === 'arrowdown' || key === 'arrowup') {
@@ -112,11 +112,15 @@ export class Camera {
     }
 
     if (event.key.toLowerCase() === 'w') {
-      cameraEntity.body?.forces.velocity.z = this._displacement;
+      cameraEntity.body?.forces.velocity = Vector.normalize(
+        this._direction
+      ).scale(this._displacement);
     }
 
     if (event.key.toLowerCase() === 's') {
-      cameraEntity.body?.forces.velocity.z = -this._displacement;
+      cameraEntity.body?.forces.velocity = Vector.normalize(
+        this._direction
+      ).scale(-this._displacement);
     }
   }
 
