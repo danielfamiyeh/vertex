@@ -3,6 +3,8 @@ import { CameraFrustrum, CameraOptions } from './Camera.types';
 import { Color } from '../color/Color';
 import { Plane } from '../../math/plane/Plane';
 
+const upVector = new Vector(0, 1, 0);
+
 export class Camera {
   private _frustrum: CameraFrustrum;
   private _position: Vector;
@@ -49,19 +51,29 @@ export class Camera {
     }
 
     if (event.key === 'ArrowLeft') {
-      this._position.x -= this._displacement;
+      const left = this.direction
+        .cross(upVector)
+        .normalize()
+        .scale(this._displacement);
+
+      this.position.add(left);
     }
 
     if (event.key === 'ArrowRight') {
-      this._position.x += this._displacement;
+      const right = this.direction
+        .cross(upVector)
+        .normalize()
+        .scale(-this._displacement);
+
+      this.position.add(right);
     }
 
     if (event.key.toLowerCase() === 'a') {
-      this._direction.x -= this._displacement / 2;
+      this._direction.x -= this._displacement / 10;
     }
 
     if (event.key.toLowerCase() === 'd') {
-      this._direction.x += this._displacement / 2;
+      this._direction.x += this._displacement / 10;
     }
 
     if (event.key.toLowerCase() === 'w') {
