@@ -9,6 +9,7 @@ export type GraphicsEngineOptions = {
     position: Vector;
     displacement: number;
     direction: Vector;
+    rotation: number;
   };
   fps?: number;
   scale?: number;

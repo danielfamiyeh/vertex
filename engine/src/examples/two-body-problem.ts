@@ -27,7 +27,7 @@ export const initTwoBodyProblemExample = async (gameEngine: GameEngine) => {
       rotation: new Vector(30, 0, 0),
       mass: 10,
       forces: {
-        velocity: new Vector(0, 0, 0.0),
+        velocity: new Vector(0, 0, 0.1),
         rotation: new Vector(0, 1, 0),
       },
       transforms: {
@@ -80,4 +80,6 @@ export const initTwoBodyProblemExample = async (gameEngine: GameEngine) => {
     earth.body?.forces.velocity.scale(-1);
   });
   earth.colliders.withMoon.isActive = true;
+
+  console.log(gameEngine);
 };

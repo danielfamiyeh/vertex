@@ -6,9 +6,10 @@ import { GraphicsEngineOptions } from './GraphicsEngine.types';
 import { GRAPHICS_ENGINE_OPTIONS_DEFAULTS } from './GraphicsEngine.utils';
 import { Triangle } from '../triangle/Triangle';
 import { cameraBounds } from '../camera/Camera.utils';
-import { Entity } from '@vertex/api/game/entity/Entity';
-import { Box } from '../../math/box/Box';
+import { Entity } from '../../game/entity/Entity';
 import { Sphere } from '../../math/sphere/Sphere';
+import { RigidBody } from '../../physics/rigid-body/RigidBody';
+import { GameEngine } from '../../game/engine/GameEngine';
 
 export class GraphicsEngine {
   // TODO: Underscore all private class members
@@ -57,7 +58,30 @@ export class GraphicsEngine {
       far: _options.camera.far,
       bottom: canvas.height,
       right: canvas.width,
+      rotation: _options.camera.rotation,
     });
+
+    const cameraEntity = new Entity('__CAMERA__');
+
+    cameraEntity.body = new RigidBody({
+      position: this.camera.position,
+      rotation: this.camera.direction,
+    });
+
+    // @ts-ignore
+    (window.__VERTEX_GAME_ENGINE__ as GameEngine).entities.__CAMERA__ =
+      cameraEntity;
+
+    cameraEntity.body.forces.velocity = new Vector(0, 0, 0);
+    cameraEntity.body.forces.rotation = new Vector(0, 0, 0);
+
+    cameraEntity.body.transforms.move = () => {
+      cameraEntity.body?.position.add(cameraEntity.body.forces.velocity);
+    };
+
+    cameraEntity.body.transforms.rotate = () => {
+      cameraEntity.body?.rotation.add(cameraEntity.body.forces.rotation);
+    };
 
     this._meshes = {};
   }

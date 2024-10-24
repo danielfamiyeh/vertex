@@ -2,6 +2,7 @@ import { Vector } from '../../math/vector/Vector';
 import { CameraFrustrum, CameraOptions } from './Camera.types';
 import { Color } from '../color/Color';
 import { Plane } from '../../math/plane/Plane';
+import { GameEngine } from '@vertex/api/game/engine/GameEngine';
 
 const upVector = new Vector(0, 1, 0);
 
@@ -10,11 +11,13 @@ export class Camera {
   private _position: Vector;
   private _direction: Vector;
   private _displacement: number;
+  private _rotation: number;
 
   constructor(options: CameraOptions) {
     this._position = options.position;
     this._direction = options.direction;
     this._displacement = options.displacement;
+    this._rotation = options.rotation;
 
     this._frustrum = {
       // TODO: Why are some of these flipped?
@@ -38,16 +41,48 @@ export class Camera {
       ),
     };
 
-    addEventListener('keydown', this.defaultControlsListener.bind(this));
+    addEventListener('keydown', this.defaultKeydownListener.bind(this));
+    addEventListener('keyup', this.defaultKeyUpListener.bind(this));
   }
 
-  defaultControlsListener(event: KeyboardEvent) {
+  defaultKeyUpListener(event: KeyboardEvent) {
+    // @ts-ignore
+
+    const key = event.key.toLowerCase();
+
+    const cameraEntity = (window.__VERTEX_GAME_ENGINE__ as GameEngine).entities
+      .__CAMERA__;
+
+    if (key === 'w' || key === 's') {
+      cameraEntity.body?.forces.velocity.z = 0;
+    }
+
+    if (key === 'arrowdown' || key === 'arrowup') {
+      cameraEntity.body?.forces.velocity.y = 0;
+    }
+
+    if (key === 'arrowright' || key === 'arrowleft') {
+      cameraEntity.body?.forces.velocity = new Vector(0, 0, 0);
+    }
+
+    if (key === 'a' || key === 'd') {
+      cameraEntity.body?.forces.rotation.x = 0;
+    }
+  }
+
+  defaultKeydownListener(event: KeyboardEvent) {
+    // @ts-ignore
+    const cameraEntity = (window.__VERTEX_GAME_ENGINE__ as GameEngine).entities
+      .__CAMERA__;
+
+    if (!cameraEntity.body) return;
+
     if (event.key === 'ArrowUp') {
-      this._position.y += this._displacement;
+      cameraEntity.body?.forces.velocity.y = this._displacement;
     }
 
     if (event.key === 'ArrowDown') {
-      this._position.y -= this._displacement;
+      cameraEntity.body?.forces.velocity.y = -this._displacement;
     }
 
     if (event.key === 'ArrowLeft') {
@@ -56,7 +91,7 @@ export class Camera {
         .normalize()
         .scale(this._displacement);
 
-      this.position.add(left);
+      cameraEntity.body?.forces.velocity = left;
     }
 
     if (event.key === 'ArrowRight') {
@@ -65,23 +100,23 @@ export class Camera {
         .normalize()
         .scale(-this._displacement);
 
-      this.position.add(right);
+      cameraEntity.body?.forces.velocity = right;
     }
 
     if (event.key.toLowerCase() === 'a') {
-      this._direction.x -= this._displacement / 10;
+      cameraEntity.body?.forces.rotation.x = -this._rotation;
     }
 
     if (event.key.toLowerCase() === 'd') {
-      this._direction.x += this._displacement / 10;
+      cameraEntity.body?.forces.rotation.x = this._rotation;
     }
 
     if (event.key.toLowerCase() === 'w') {
-      this._position.add(Vector.scale(this._direction, this._displacement));
+      cameraEntity.body?.forces.velocity.z = this._displacement;
     }
 
     if (event.key.toLowerCase() === 's') {
-      this._position.sub(Vector.scale(this._direction, this._displacement));
+      cameraEntity.body?.forces.velocity.z = -this._displacement;
     }
   }
 
