@@ -13,6 +13,7 @@ const gameEngine = new GameEngine({
       position: new Vector(0, 10, -30),
       direction: new Vector(0, 0, 1),
       displacement: 1,
+      rotation: 1e-2,
     },
   },
   physics: {},

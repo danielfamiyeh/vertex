@@ -16,6 +16,9 @@ export class GameEngine {
   private _lastFrame = Date.now();
 
   constructor({ graphics, physics }: GameEngineOptions) {
+    // @ts-ignore
+    window.__VERTEX_GAME_ENGINE__ = this;
+
     this._graphics = new GraphicsEngine(
       document.getElementById('canvas') as HTMLCanvasElement,
       Object.assign({}, GRAPHICS_ENGINE_OPTIONS_DEFAULTS, graphics)
@@ -23,9 +26,6 @@ export class GameEngine {
 
     this._physics = new PhysicsEngine();
     this._fps = graphics.fps ?? 30;
-
-    // @ts-ignore
-    window.__VERTEX_GAME_ENGINE__ = this;
   }
 
   start() {
@@ -86,7 +86,7 @@ export class GameEngine {
     if (!entity) entity = new Entity(id);
 
     entity.mesh = mesh;
-    
+
     if (entity.body !== undefined) {
       entity.body.boundingSphere = boundingSphere;
     }

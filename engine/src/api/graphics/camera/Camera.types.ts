@@ -12,6 +12,7 @@ export type CameraFrustrum = {
 
 export type CameraOptions = {
   displacement: number;
+  rotation: number;
   position: Vector;
   direction: Vector;
   near: number;

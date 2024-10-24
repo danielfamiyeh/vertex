@@ -13,5 +13,6 @@ export const GRAPHICS_ENGINE_OPTIONS_DEFAULTS: Required<GraphicsEngineOptions> =
       position: new Vector(0, 0, 0),
       direction: new Vector(0, 0, -5),
       displacement: 0.5,
+      rotation: 1e-2,
     },
   };
