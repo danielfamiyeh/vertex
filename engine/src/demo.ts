@@ -12,7 +12,7 @@ const gameEngine = new GameEngine({
       fieldOfView: 45,
       position: new Vector(0, 10, -30),
       direction: new Vector(0, 0, 1),
-      displacement: 2,
+      displacement: 1,
     },
   },
   physics: {},

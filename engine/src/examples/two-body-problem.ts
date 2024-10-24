@@ -76,8 +76,6 @@ export const initTwoBodyProblemExample = async (gameEngine: GameEngine) => {
   });
 
   earth.colliders.withMoon = new SphereCollider(earth.body, moon.body, () => {
-    console.log('intersects');
-
     moon.body?.forces.velocity.scale(-1);
     earth.body?.forces.velocity.scale(-1);
   });
